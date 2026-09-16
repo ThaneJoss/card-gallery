@@ -1,10 +1,11 @@
-name: 自动保存 PR 卡面
+name: 自动整理 PR 卡面
 
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
     paths:
       - cards.yaml
+      - 'assets/cards/**'
 
 permissions:
   contents: write
@@ -33,7 +34,7 @@ jobs:
       - name: 安装默认分支的依赖
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: 下载卡面并追加提交
+      - name: 下载卡面、清理未引用图片并追加提交
         uses: actions/github-script@v9
         with:
           script: |

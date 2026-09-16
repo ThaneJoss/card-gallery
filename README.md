@@ -1,6 +1,6 @@
 # 卡间拾光
 
-卡间拾光是一个独立的银行卡收藏画廊，使用原生 HTML、CSS 和 JavaScript。卡片信息在 **`cards.yaml`** 中维护，卡面原图保存在 **`assets/cards/`**。提交 PR 时可直接填写图片网址，bot 会下载图片、改为本地相对路径并向 PR 追加一个提交。部署时通过 pnpm 构建，将卡面转换成 WebP，生成可以独立发布的 `public/`。
+卡间拾光是一个独立的银行卡收藏画廊，使用原生 HTML、CSS 和 JavaScript。卡片信息在 **`cards.yaml`** 中维护，卡面原图保存在 **`assets/cards/`**。提交 PR 时可直接填写图片网址，bot 会下载图片、改为本地相对路径、清理未引用卡面，并向 PR 追加一个提交。部署时通过 pnpm 构建，将卡面转换成 WebP，生成可以独立发布的 `public/`。
 
 日常只需编辑中文字段，不需要写 JavaScript，也不需要手动下载卡面；等待 bot 提交后合并 PR 即可。预览和发布都使用构建后的 `public/`。
 
@@ -47,12 +47,12 @@
 | 编号 | 否 | 省略时自动生成。手动填写时不能重复；复制已有记录时请修改或删除编号。 |
 
 - **修改卡片**：直接修改相应字段。换图时重新填入「图片」的 URL 并提交 PR，bot 会保存新文件；已有同名文件不会被覆盖。
-- **删除卡片**：删除从 `- 名称:` 到下一张卡之前的整段；下一次构建会清理旧图片。没有卡片时可以清空文件。
+- **删除卡片**：删除从 `- 名称:` 到下一张卡之前的整段；PR bot 会删除不再被任何卡片引用的原图，下一次构建会清理发布目录的旧图片。没有卡片时可以清空文件。
 - **调整顺序**：上下移动整段卡片资料，网页按文件中的顺序展示。
 - **银行图标**：只需填写「银行」。图标根据银行名称自动匹配，无需逐张配置；暂未收录图标的银行显示通用银行图标。银行名称与图标的对应关系统一维护在 `assets/logos/sources.json` 中。
 - **图片格式与比例**：可使用浏览器支持的 WebP、PNG、JPG 等图片，建议比例约为 `1.586 : 1`。页面等比填满银行卡区域，非标准比例的图片会裁切，不会拉伸。
 - **图片直链**：填写图片本身的地址，不是图片所在的网页或网盘分享页。地址需允许 GitHub Actions 无需登录即可下载；bot 保存成功后，部署不再依赖该来源网址。
-- **本地卡面**：使用 `./assets/cards/文件名.jpg` 等相对路径。可删除不再使用的旧图片；bot 不会自动删除仓库里的原图。
+- **本地卡面**：使用 `./assets/cards/文件名.jpg` 等相对路径。bot 和 `pnpm localize:cards` 都会清理 `assets/cards/` 中未被资料引用的图片，包含子目录；仍有卡片引用的共享图片会保留。
 - **格式提示**：可以用 `#` 写注释，卡片之间可留空行。缩进使用空格，不使用 Tab。文本含有 `: ` 或 ` #`，以及纯数字编号等容易被当成其他类型的值时，请用引号包住，如 `名称: "旅行卡: 蓝色"`。
 - **检查资料**：运行 `pnpm check:cards`，无需下载图片即可检查格式和字段；语法错误会给出出错行列，字段错误会指出第几张卡片及中文字段名。
 - **自动生成文件**：只修改 `cards.yaml`。`public/cards.js` 由构建自动生成，不手动维护；根目录的 `index.html` 是构建模板，预览请打开 `public/index.html`。
@@ -61,15 +61,16 @@
 
 ## PR 卡面 bot
 
-工作流位于 `.github/workflows/localize-card-images.yml`。工作流及其脚本先合入默认分支后，对涉及 `cards.yaml` 的 PR，在创建、追加提交、重新打开时自动运行。
+工作流位于 `.github/workflows/localize-card-images.yml`。工作流及其脚本先合入默认分支后，对涉及 `cards.yaml` 或 `assets/cards/` 的 PR，在创建、追加提交、重新打开时自动运行。
 
 1. 读取 PR 最新版本的 `cards.yaml`，检查每张卡的「图片」。`https://`、`http://`、`//` 开头的网址会下载；`images.example.com/card.jpg` 这样的地址会补上 `https://`。`./assets/cards/card.jpg`、`assets/cards/card.jpg`、`card.jpg` 等本地路径保持不变。
 2. 下载并校验图片，保留原始图片字节，按实际格式命名为 `assets/cards/编号.扩展名`。未填编号时使用 `card-1` 等名称；同名时添加数字后缀，相同网址在一次处理内复用同一个文件。
-3. 将「图片」改为 `./assets/cards/...`，保留 YAML 中的注释及其他字段，把全部图片和 YAML 一起提交到 PR 来源分支，提交信息为「自动保存卡面图片并改为本地相对路径」。
+3. 将「图片」改为 `./assets/cards/...`，保留 YAML 中的注释及其他字段，再按更新后的资料清理 `assets/cards/` 中未引用的图片。支持 PNG、JPEG、WebP、GIF、AVIF、SVG 等图片扩展名；非图片文件、目录、符号链接和该目录之外的资源保留。
+4. 把图片新增、删除和 YAML 修改一起提交到 PR 来源分支，提交信息为「自动本地化卡面并清理未引用图片」。
 
-全部是本地路径时不产生新提交。任一下载或图片校验失败时，工作流报错且不追加提交。下载期间若 PR 出现新提交，不会覆盖新改动；新提交会触发下一次处理。
+即使全部是本地路径，只要存在未引用图片，也会追加清理提交；路径和图片都无需整理时不产生新提交。空卡片列表会清理全部未引用卡面。任一下载、资料或图片校验失败时，不删除图片，工作流报错且不追加提交。下载期间若 PR 出现新提交，不会覆盖新改动；新提交会触发下一次处理。
 
-当前自动回写支持**本仓库分支的 PR**，使用内置 `GITHUB_TOKEN`，无需配置额外 secret。Fork PR 会在 Actions 中提示无法回写，贡献者可在来源分支运行 `pnpm localize:cards`，提交 `cards.yaml` 与新增的 `assets/cards/` 文件后更新 PR。
+当前自动回写支持**本仓库分支的 PR**，使用内置 `GITHUB_TOKEN`，无需配置额外 secret。Fork PR 会在 Actions 中提示无法回写，贡献者可在来源分支运行 `pnpm localize:cards`，提交 `cards.yaml` 与 `assets/cards/` 的新增、删除后更新 PR。
 
 工作流使用 `pull_request_target`，只执行默认分支中的脚本和锁定依赖，通过 API 读取 PR 资料并提交生成的文件，不执行 PR 中的代码。详见 [GitHub 的 pull_request_target 安全说明](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target)。
 
@@ -102,7 +103,7 @@ cards.yaml 中的中文卡片资料和本地图片路径
 - `public/` 和 `node_modules/` 已在 `.gitignore` 中，不提交到仓库。`public/` 仍会占用部署平台的存储空间。
 - 下载失败或内容不是有效图片时，构建报出对应卡片的 `id` 并以失败状态退出；未完成的 `public/` 会被清理。
 - 已发布的网站使用自身的图片文件，浏览时不依赖原图站点；经 bot 本地化后的卡面在下一次构建时也无需访问原图站点。
-- `pnpm test` 可验证中文资料解析、远程卡面本地化、PR 提交、图片转换和失败处理。
+- `pnpm test` 可验证中文资料解析、远程卡面本地化、未引用图片清理、PR 提交、图片转换和失败处理。
 
 ## 目录
 
@@ -110,13 +111,13 @@ cards.yaml 中的中文卡片资料和本地图片路径
 | --- | --- |
 | `cards.yaml` | 手动维护的中文卡片资料及图片路径，也可填写待 bot 下载的网址 |
 | `scripts/card-data.mjs` | 解析并校验卡片资料，生成网页需要的数据 |
-| `scripts/localize-card-images.mjs` | 下载远程卡面、生成本地相对路径；也提供本地命令 |
-| `scripts/localize-pr-cards.mjs` | 读取 PR 资料并把图片与 YAML 一起提交到来源分支 |
+| `scripts/localize-card-images.mjs` | 下载远程卡面、生成本地相对路径并清理未引用图片；也提供本地命令 |
+| `scripts/localize-pr-cards.mjs` | 读取 PR 资料并把图片新增、删除与 YAML 一起提交到来源分支 |
 | `.github/workflows/localize-card-images.yml` | PR 卡面 bot 的触发事件、依赖安装和写入权限 |
 | `scripts/build.mjs` | 下载、转换图片并生成发布目录 |
 | `package.json`、`pnpm-lock.yaml` | 构建命令、pnpm 版本及依赖版本 |
 | `public/` | 构建生成的完整静态网站，已忽略，不提交 Git |
-| `assets/cards/` | 随 Git 提交的卡面原图，PR bot 自动保存远程卡面 |
+| `assets/cards/` | 随 Git 提交的卡面原图，PR bot 自动保存远程卡面并清理未引用图片 |
 | `app.js` | 数据校验、加载、搜索、筛选与放大查看 |
 | `index.html` | 网站名称、页面文案、首页链接与页面结构 |
 | `styles.css` | 颜色、字体、间距、银行卡比例与响应式布局 |

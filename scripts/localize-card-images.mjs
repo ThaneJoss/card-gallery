@@ -1,5 +1,5 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, posix, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { parseDocument } from 'yaml';
@@ -21,7 +21,7 @@ export function remoteImageUrl(value) {
   return url.href;
 }
 
-export async function localizeCardImages({ source, existingPaths = [], fetchImage = fetch }) {
+export async function localizeCardImages({ source, existingPaths = [], existingFiles = existingPaths, fetchImage = fetch }) {
   const cards = parseCards(source);
   const document = parseDocument(source);
   const paths = new Set(existingPaths);
@@ -55,18 +55,28 @@ export async function localizeCardImages({ source, existingPaths = [], fetchImag
     }
   }
 
-  return { source: changedCards ? document.toString({ lineWidth: 0 }) : source, images, changedCards };
+  const updatedSource = changedCards ? document.toString({ lineWidth: 0 }) : source;
+  const references = new Set(parseCards(updatedSource).map(card => posix.normalize(card.image)));
+  // 按最终资料清理普通图片文件；目录和符号链接只参与文件名避让。
+  const deletedImages = existingFiles.filter(path =>
+    path.startsWith('assets/cards/') &&
+    /\.(?:avif|bmp|gif|heic|heif|ico|jfif|jpe?g|jxl|png|svg|tiff?|webp)$/i.test(path) &&
+    !references.has(path)
+  );
+  return { source: updatedSource, images, changedCards, deletedImages };
 }
 
 export async function localizeCardsFile({ root = projectRoot, log = console.log } = {}) {
   const sourcePath = resolve(root, 'cards.yaml');
-  const entries = await readdir(resolve(root, 'assets/cards'), { recursive: true }).catch(error => {
+  const entries = await readdir(resolve(root, 'assets/cards'), { recursive: true, withFileTypes: true }).catch(error => {
     if (error.code === 'ENOENT') return [];
     throw error;
   });
+  const repoPath = entry => relative(root, resolve(entry.parentPath, entry.name)).split(sep).join('/');
   const result = await localizeCardImages({
     source: await readFile(sourcePath, 'utf8'),
-    existingPaths: entries.map(path => `assets/cards/${path}`)
+    existingPaths: entries.map(repoPath),
+    existingFiles: entries.filter(entry => entry.isFile()).map(repoPath)
   });
   // 所有下载和图片校验完成后才写入，失败时保留原来的 YAML。
   for (const { path, content } of result.images) {
@@ -74,7 +84,8 @@ export async function localizeCardsFile({ root = projectRoot, log = console.log 
     await writeFile(resolve(root, path), content, { flag: 'wx' });
   }
   if (result.changedCards) await writeFile(sourcePath, result.source);
-  log(`卡面本地化完成：更新 ${result.changedCards} 张卡片，新增 ${result.images.length} 个图片文件。`);
+  for (const path of result.deletedImages) await rm(resolve(root, path));
+  log(`卡面整理完成：更新 ${result.changedCards} 张卡片，新增 ${result.images.length} 个图片文件，清理 ${result.deletedImages.length} 个未引用图片。`);
   return result;
 }
 

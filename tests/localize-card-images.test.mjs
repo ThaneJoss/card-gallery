@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
@@ -113,18 +113,86 @@ test('全部是本地路径或空列表时不下载、不重新格式化 YAML', 
     assert.equal(result.source, source);
     assert.deepEqual(result.images, []);
     assert.equal(result.changedCards, 0);
+    assert.deepEqual(result.deletedImages, []);
   }
 });
 
-test('下载或校验失败时不改写 YAML、不写入前面已下载的图片', async t => {
+test('清理按规范化的相对路径判断引用，保留共享卡面和非卡面资源', async () => {
+  const source = stringify([
+    card('shared-one', './assets/cards/shared.png'),
+    card('shared-two', 'assets/cards/shared.png'),
+    card('normalized', './assets/cards/nested/../keep.webp'),
+    card('nested', 'assets/cards/nested/keep.JPG')
+  ]);
+  const result = await localizeCardImages({
+    source,
+    existingPaths: [
+      'assets/cards/shared.png', 'assets/cards/keep.webp', 'assets/cards/nested/keep.JPG',
+      'assets/cards/unused.png', 'assets/cards/nested/unused.JPG', 'assets/cards/README.md',
+      'assets/cards/.gitkeep', 'assets/logos/banks/test.svg', 'assets/collection.webp'
+    ],
+    fetchImage() { assert.fail('本地卡面不应下载'); }
+  });
+  assert.deepEqual(result.deletedImages, ['assets/cards/unused.png', 'assets/cards/nested/unused.JPG']);
+  assert.equal(result.changedCards, 0);
+  assert.equal(result.source, source);
+});
+
+test('替换远程卡面后删除旧文件，保留新下载的图片', async () => {
+  const result = await localizeCardImages({
+    source: stringify([card('replace', 'https://example.com/new.png')]),
+    existingPaths: ['assets/cards/replace.png'],
+    fetchImage: async () => new Response(png)
+  });
+  assert.deepEqual(result.deletedImages, ['assets/cards/replace.png']);
+  assert.equal(result.images[0].path, 'assets/cards/replace-2.png');
+  assert.equal(parseCards(result.source)[0].image, './assets/cards/replace-2.png');
+});
+
+test('空卡片列表清理子目录图片，保留文档、目录和符号链接，重复运行无变化', async t => {
+  const source = '# 暂时没有卡片\n';
+  const root = await fixture(t, source);
+  await mkdir(resolve(root, 'assets/cards/nested'), { recursive: true });
+  await mkdir(resolve(root, 'assets/cards/directory.png'));
+  await writeFile(resolve(root, 'assets/cards/old.png'), png);
+  await writeFile(resolve(root, 'assets/cards/nested/old.JPG'), png);
+  await writeFile(resolve(root, 'assets/cards/README.md'), '说明');
+  await writeFile(resolve(root, 'assets/collection.webp'), png);
+  await symlink('../collection.webp', resolve(root, 'assets/cards/link.webp'));
+
+  const result = await localizeCardsFile({ root, log() {} });
+  assert.deepEqual(result.deletedImages.sort(), ['assets/cards/nested/old.JPG', 'assets/cards/old.png']);
+  assert.equal(await readFile(resolve(root, 'cards.yaml'), 'utf8'), source);
+  assert.equal(await readFile(resolve(root, 'assets/cards/README.md'), 'utf8'), '说明');
+  assert.deepEqual(await readFile(resolve(root, 'assets/collection.webp')), png);
+  assert.ok((await lstat(resolve(root, 'assets/cards/directory.png'))).isDirectory());
+  assert.ok((await lstat(resolve(root, 'assets/cards/link.webp'))).isSymbolicLink());
+  assert.deepEqual(await readdir(resolve(root, 'assets/cards/nested')), []);
+  assert.deepEqual((await localizeCardsFile({ root, log() {} })).deletedImages, []);
+});
+
+test('下载或校验失败时不改写 YAML、不写入新图，也不清理旧图', async t => {
   const { url } = await imageServer(t);
   for (const path of ['/missing', '/html']) {
     const source = stringify([card('ok', `${url}/redirect`), card('broken', `${url}${path}`)]);
     const root = await fixture(t, source);
+    await mkdir(resolve(root, 'assets/cards'), { recursive: true });
+    await writeFile(resolve(root, 'assets/cards/old.png'), png);
     await assert.rejects(localizeCardsFile({ root, log() {} }), /卡片「broken」本地化失败/);
     assert.equal(await readFile(resolve(root, 'cards.yaml'), 'utf8'), source);
-    assert.deepEqual(await readdir(root), ['cards.yaml']);
+    assert.deepEqual(await readdir(resolve(root, 'assets/cards')), ['old.png']);
+    assert.deepEqual(await readFile(resolve(root, 'assets/cards/old.png')), png);
   }
+});
+
+test('资料校验失败时不清理已有图片', async t => {
+  const source = '- 名称: 缺少银行和图片\n';
+  const root = await fixture(t, source);
+  await mkdir(resolve(root, 'assets/cards'), { recursive: true });
+  await writeFile(resolve(root, 'assets/cards/old.png'), png);
+  await assert.rejects(localizeCardsFile({ root, log() {} }), /第 1 张卡片/);
+  assert.equal(await readFile(resolve(root, 'cards.yaml'), 'utf8'), source);
+  assert.deepEqual(await readFile(resolve(root, 'assets/cards/old.png')), png);
 });
 
 test('本地化后可在图片源离线时构建，重复运行不会增加文件或改写资料', async t => {
@@ -139,6 +207,7 @@ test('本地化后可在图片源离线时构建，重复运行不会增加文�
   const saved = await readFile(resolve(root, 'cards.yaml'), 'utf8');
   const second = await localizeCardsFile({ root, log() {} });
   assert.equal(second.changedCards, 0);
+  assert.deepEqual(second.deletedImages, []);
   assert.equal(await readFile(resolve(root, 'cards.yaml'), 'utf8'), saved);
   assert.deepEqual(await readdir(resolve(root, 'assets/cards')), ['offline.png']);
   assert.deepEqual(await readFile(resolve(root, 'assets/cards/offline.png')), png);

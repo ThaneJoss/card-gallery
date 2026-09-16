@@ -16,14 +16,15 @@ export async function localizePullRequest({ github, context, core, fetchImage = 
     github.rest.git.getTree({ ...context.repo, tree_sha: pr.head.sha, recursive: '1' })
   ]);
   if (file.type !== 'file' || file.encoding !== 'base64') throw new Error('cards.yaml 必须是可读取的普通文件。');
-  if (tree.truncated) throw new Error('PR 文件目录未完整返回，无法确认图片文件名是否重复。');
+  if (tree.truncated) throw new Error('PR 文件目录未完整返回，无法确认卡面文件和清理范围。');
   const result = await localizeCardImages({
     source: Buffer.from(file.content, 'base64').toString('utf8'),
     existingPaths: tree.tree.map(entry => entry.path),
+    existingFiles: tree.tree.filter(entry => entry.type === 'blob' && entry.mode !== '120000').map(entry => entry.path),
     fetchImage
   });
-  if (!result.changedCards) {
-    core.info('所有卡面已使用本地路径，无需追加提交。');
+  if (!result.changedCards && !result.deletedImages.length) {
+    core.info('所有卡面已使用本地路径，且没有未引用图片，无需追加提交。');
     return;
   }
 
@@ -33,7 +34,7 @@ export async function localizePullRequest({ github, context, core, fetchImage = 
     return;
   }
 
-  // 图片和 YAML 原子提交；expectedHeadOid 保证并发推送不会被覆盖。
+  // 图片新增、删除和 YAML 原子提交；expectedHeadOid 保证并发推送不会被覆盖。
   await github.graphql(`
     mutation($input: CreateCommitOnBranchInput!) {
       createCommitOnBranch(input: $input) { commit { url } }
@@ -42,14 +43,15 @@ export async function localizePullRequest({ github, context, core, fetchImage = 
     input: {
       branch: { repositoryNameWithOwner: repository, branchName: pr.head.ref },
       expectedHeadOid: pr.head.sha,
-      message: { headline: '自动保存卡面图片并改为本地相对路径' },
+      message: { headline: '自动本地化卡面并清理未引用图片' },
       fileChanges: {
         additions: [
-          { path: 'cards.yaml', contents: Buffer.from(result.source).toString('base64') },
+          ...(result.changedCards ? [{ path: 'cards.yaml', contents: Buffer.from(result.source).toString('base64') }] : []),
           ...result.images.map(({ path, content }) => ({ path, contents: content.toString('base64') }))
-        ]
+        ],
+        deletions: result.deletedImages.map(path => ({ path }))
       }
     }
   });
-  core.notice(`已向 PR 追加提交：更新 ${result.changedCards} 张卡片，保存 ${result.images.length} 个图片文件。`);
+  core.notice(`已向 PR 追加提交：更新 ${result.changedCards} 张卡片，保存 ${result.images.length} 个图片文件，清理 ${result.deletedImages.length} 个未引用图片。`);
 }
