@@ -130,4 +130,4 @@ cards.js 中的远程 URL
 
 这样每次远程部署都会生成站内卡面文件，本地只需维护源码和 URL。手动部署时也可先构建，再上传整个 `public/`。生成的资源使用相对路径，可部署在网站根目录或仓库子目录下。
 
-若使用 GitHub Pages，需要通过 GitHub Actions 执行构建并上传 `public/`，直接从源码分支发布不会执行图片转换。仓库目前只提供通用构建脚本，尚未绑定或启用某个平台的发布流程。参考 [GitHub 自定义构建文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
+Vercel 项目可按上表配置构建命令和发布目录。若使用 GitHub Pages，需要通过 GitHub Actions 执行构建并上传 `public/`，直接从源码分支发布不会执行图片转换。参考 [GitHub 自定义构建文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
