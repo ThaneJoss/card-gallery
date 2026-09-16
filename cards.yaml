@@ -6,20 +6,9 @@
 # 编号可以省略，由构建自动生成；复制已有卡片时请修改或删除编号。
 # 部署时从本地读取卡面并转换图片，无需再次请求来源网站。
 
-- 名称: 长城环球通白金卡
-  银行: 中国银行
-  类型: 信用卡
-  图片: ./assets/cards/boc-mountain.webp
-  卡组织:
-    - Visa
-    - 银联
-  编号: boc-mountain
-
 - 名称: 马年生肖卡马到成功版
   银行: 中国工商银行
   类型: 储蓄卡
-  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴，337×213，未确认官方原始出处）。
-  # 原图：https://storage.my-api.cn/static/images/new_upload/155.jpg
   图片: ./assets/cards/icbc-horse-success.jpg
   卡组织: 银联
   编号: icbc-horse-success
