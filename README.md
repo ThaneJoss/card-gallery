@@ -8,7 +8,7 @@
 - 卡面等比缩放并裁切，不拉伸银行标识和画面。
 - 搜索银行、卡名和画面关键词；按卡片类型、银行、卡组织组合筛选。筛选栏保持单行，窄屏可横向滑动。
 - 自定义下拉菜单显示品牌图标和选中标记，支持方向键、Enter、Esc 及点击外部关闭。
-- 卡名旁仅显示银行 logo；品牌图标使用独立 SVG 文件，来源见 `ASSET_SOURCES.md`。
+- 卡名旁仅显示银行 logo；品牌图标使用独立 SVG 文件，来源见 `assets/logos/sources.json`。
 - 点击卡片查看大图，使用关闭按钮、Esc 键或点击遮罩关闭。
 - 大图不包含上一张、下一张、页码和方向键切换功能。
 - 大图根据当前窗口宽高和标题高度自动缩放，保留银行卡比例，弹窗内不出现滚动条。
@@ -16,16 +16,16 @@
 
 ## 目录与本地打开
 
-工作项目的网页文件位于 `dist/`。交付的 `card-gallery-github.zip` 已将网页文件放在压缩包根目录，解压后直接打开 `index.html` 即可浏览。
+网页文件位于本仓库根目录，无需安装依赖或构建。下载仓库后直接打开 `index.html` 即可浏览。
 
 | 文件 | 用途 |
 | --- | --- |
 | `index.html` | 页面结构 |
 | `styles.css` | 页面样式、银行卡比例和响应式布局 |
 | `app.js` | 卡片数据、搜索、筛选与放大查看 |
-| `assets/collection.png` | 参考图片素材图集 |
+| `assets/collection.webp` | 参考图片素材图集 |
 | `assets/logos/` | 银行及卡组织 SVG 图标 |
-| `ASSET_SOURCES.md` | 官方图标来源和提取说明 |
+| `assets/logos/sources.json` | 官方图标来源和提取说明 |
 | `.nojekyll` | 让 GitHub Pages 直接发布静态文件 |
 | `README.md` | 本说明 |
 
@@ -33,7 +33,7 @@
 
 ## 上传到 GitHub
 
-1. 解压 `card-gallery-github.zip`。
+1. 如使用 `card-gallery-github-ready.zip`，解压后进入 `public/card-gallery/`，上传该目录内的网页文件。
 2. 在 GitHub 创建一个仓库，或打开准备存放此网站的仓库。
 3. 使用 **Add file → Upload files**，上传解压后的文件及完整的 `assets` 文件夹，然后提交。不要只上传 ZIP 文件。
 4. 确保仓库根目录下直接存在 `index.html`、`styles.css`、`app.js` 和 `assets` 文件夹。

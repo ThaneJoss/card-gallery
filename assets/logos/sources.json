@@ -1,0 +1,134 @@
+{
+  "verified_on": "2026-09-15",
+  "assets": [
+    {
+      "name": "中国银行",
+      "file": "banks/boc.svg",
+      "source_url": "https://www.boc.cn/invester/ir3/200812/P020081207571252517453.pdf",
+      "source_title": "2008 Interim Report (Chinese edition)",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "4e7e464833ec82323edbdda718360d0759c3f81144cb646dc40a1a41dd570f88"
+    },
+    {
+      "name": "交通银行",
+      "file": "banks/bocom.svg",
+      "source_url": "https://www.hk.bankcomm.com/hk/uploadhk/infos/201802/01/2600277/20180201111701_3_1_Customer_Service_Booklet.pdf",
+      "source_title": "Customer Service Booklet, Hong Kong, 2018",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "af489011ec6257f8934047a1b2bbd6f17b1fea38e7ad890f223f02beed62cade"
+    },
+    {
+      "name": "中国农业银行",
+      "file": "banks/abc.svg",
+      "source_url": "https://www.abchina.com/cn/AboutABC/investor_relations/report/am/202503/P020250428601363619281.pdf",
+      "source_title": "2024 Annual Report (H shares)",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "d0a1a836b75b0f1c48f61370beb4b0cc2dce59715b363ffa6acec8b9177ca49d"
+    },
+    {
+      "name": "中国工商银行",
+      "file": "banks/icbc.svg",
+      "source_url": "https://v.icbc.com.cn/userfiles/resources/icbcltd/download/2026/2025AnnualReportA.pdf",
+      "source_title": "2025 Annual Report (A shares)",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "3a666643c8b0cb4807972900f0bc39c7fccfd040153c5422be6b58fbd40726bb"
+    },
+    {
+      "name": "中信银行",
+      "file": "banks/citic.svg",
+      "source_url": "https://www.citicbank.com/about/investor_1011/financialaffairs/report/2025/202604/W020260616416491396035.pdf",
+      "source_title": "2025 Annual Report (English edition), file updated June 2026",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "0b0cc965e95976a93e7764a51ef7af4c18b9d6ea38f65da0d87805e556658b5d"
+    },
+    {
+      "name": "兴业银行",
+      "file": "banks/cib.svg",
+      "source_url": "https://download.cib.com.cn/netbank/download/cn/Sustainable_Finance/report_2022en.pdf",
+      "source_title": "Sustainability Report 2022 (English edition)",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "00bddf99446b09bab75fc386bb5a6a82435cae05392d689782e99cc4a56d68bf"
+    },
+    {
+      "name": "招商银行",
+      "file": "banks/cmb.svg",
+      "source_url": "https://s3gw.cmbimg.com/lb5001-cmbweb-prd-1255000097/cmbir/20260828/da8e9589-a067-498b-a878-2a7e33be4212.pdf",
+      "source_title": "2026 Interim Results Announcement",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "58998bf68acaecbc94fe39b12588eeeb09633fb55cf1ecbcd10d49bc69eabf6e"
+    },
+    {
+      "name": "中国建设银行",
+      "file": "banks/ccb.svg",
+      "source_url": "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0425/2025042501077.pdf",
+      "source_title": "China Construction Bank Corporation 2024 Annual Report (English edition)",
+      "source_page": 1,
+      "method": "从官方报告保留原始矢量路径，裁切至独立标志；未描摹或嵌入位图。",
+      "sha256": "5a24f331c46d4ee9a5e9f2ed6b39034196cba536e138accab358ae842b8b98ac"
+    },
+    {
+      "name": "浦发银行",
+      "file": "banks/spdb.svg",
+      "source_url": "https://vpr.hkma.gov.hk/statics/assets/doc/100306/ar_25/ar_25_eng.pdf",
+      "source_title": "2025 年报（香港金融管理局官方监管名册）",
+      "source_page": 2,
+      "method": "保留官方年报中原始 pd 标志的复合矢量路径，转换为 SVG；未描摹或嵌入位图。",
+      "sha256": "c719ddb5133f6aa84726a801a8f2c5075d4c5babc359d7f8a871c3028a21d647"
+    },
+    {
+      "name": "Visa",
+      "file": "networks/visa.svg",
+      "source_url": "https://design.visa.com/",
+      "source_page_url": "https://design.visa.com/",
+      "method": "提取官网内嵌 SVG，使用官网定义的品牌颜色。",
+      "sha256": "d7f728f27d1f28d6f79e8d7382215eec942fcad213a07245de2124ebb7a1cd24"
+    },
+    {
+      "name": "Mastercard",
+      "file": "networks/mastercard.svg",
+      "source_url": "https://www.mastercard.com/content/dam/mccom/shared/header/ma_symbol.svg",
+      "source_page_url": "https://www.mastercard.com/us/en.html",
+      "method": "官网原始 SVG 文件。",
+      "sha256": "0c4c0d138c909a3f3539f6a61010ba853ea07bfb4f8d5fcdd16156e233a28ed3"
+    },
+    {
+      "name": "UnionPay / 银联",
+      "file": "networks/unionpay.svg",
+      "source_url": "https://www.unionpayintl.com/cn/mediaCenter/brandCenter/artworkDownloadCenter/zip/Brandlogo.rar",
+      "source_page_url": "https://www.unionpayintl.com/cn/mediaCenter/brandCenter/artworkDownloadCenter/identification.shtml",
+      "method": "官方 Illustrator 文件转为 SVG，保留原始路径和颜色。",
+      "sha256": "3cbec0a4de7e91efb820045e5a0d534d81e90142bdabc8494f2ec39985cfbed5"
+    },
+    {
+      "name": "American Express",
+      "file": "networks/amex.svg",
+      "source_url": "https://www.aexp-static.com/cdaas/one/statics/axp-static-assets/1.8.0/package/dist/img/logos/dls-logo-bluebox-solid.svg",
+      "source_page_url": "https://www.americanexpress.com/en-us/company/",
+      "method": "官网原始 SVG 文件。",
+      "sha256": "028f643755987211bf2f3add6c62ae1870a888cf2f4fe3040a4fac7dce2543ab"
+    },
+    {
+      "name": "JCB",
+      "file": "networks/jcb.svg",
+      "source_url": "https://www.global.jcb/en/common/images/svg/jcb_emblem.svg",
+      "source_page_url": "https://www.global.jcb/en/about-us/brand-concept/",
+      "method": "官网原始 SVG 文件。",
+      "sha256": "3691cf3ffd71c76af02943cd72d6fa476465184fc72ee0b0483756f3182ef2d4"
+    },
+    {
+      "name": "Discover",
+      "file": "networks/discover.svg",
+      "source_url": "https://www.discover.com/content/dam/discover/en_us/global/logos/discover-logo.svg",
+      "source_page_url": "https://www.discover.com/",
+      "method": "官网原始 SVG 文件。",
+      "sha256": "eeb8825a063b7cf8e8138f540e0eae36168885c9f37cad849f52a4e6bac28199"
+    }
+  ]
+}

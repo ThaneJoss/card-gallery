@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f9ff">
+  <meta name="description" content="卡间拾光，收藏一方卡面里的万千风景。浏览银行卡设计，按银行、卡片类型与卡组织筛选你喜欢的卡面。">
+  <title>卡间拾光 · 银行卡收藏画廊</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='5' y='9' width='54' height='46' rx='10' fill='%23103569'/%3E%3Cpath d='M16 23h32' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='18' cy='42' r='4' fill='white'/%3E%3Ccircle cx='48' cy='45' r='2' fill='white'/%3E%3C/svg%3E">
+  <link rel="preload" href="./assets/collection.webp" as="image">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#gallery">跳转到卡片画廊</a>
+  <svg class="background-waves" aria-hidden="true" viewBox="0 0 1536 1024" preserveAspectRatio="none">
+    <path d="M0 354C61 363 43 405 113 451S199 468 311 537L0 633Z" fill="#e1efff"/>
+    <path d="M0 519C60 540 62 634 145 686S249 710 352 789L0 855Z" fill="#dfedff"/>
+    <path d="M0 755C55 772 48 855 118 907S238 921 346 996L392 1024H0Z" fill="#e0edff"/>
+    <path d="M0 887C59 904 71 952 162 973S275 956 377 1024H0Z" fill="#d7e8ff"/>
+    <path d="M1536 862C1466 823 1438 929 1343 927S1184 973 1145 1024H1536Z" fill="#e9f3ff"/>
+    <path d="M1536 957C1485 967 1480 1013 1401 1024H1536Z" fill="#deedff"/>
+  </svg>
+  <header class="site-header">
+    <div class="header-content">
+      <a class="brand" href="./index.html" aria-label="卡间拾光首页">
+        <svg class="brand-mark" viewBox="0 0 56 50" aria-hidden="true"><rect x="1" y="1" width="54" height="48" rx="9" fill="currentColor"/><path d="M12 16h32" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="14" cy="34" r="4" fill="white"/><circle cx="45" cy="37" r="1.7" fill="white"/></svg>
+        <span class="brand-type"><span class="brand-name">卡间拾光</span><span class="brand-subtitle" lang="en">CARD COLLECTION GALLERY</span></span>
+      </a>
+      <form class="search" role="search" id="search-form">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg>
+        <input id="search-input" type="search" placeholder="搜索银行、卡名或关键词…" aria-label="搜索银行、卡名或关键词" autocomplete="off">
+        <button class="clear-search" id="clear-search" type="button" aria-label="清除搜索" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M7 17 17 7"/></svg></button>
+      </form>
+    </div>
+  </header>
+  <main class="main-content">
+    <h1 class="sr-only">银行卡收藏画廊</h1>
+    <section class="filters" aria-label="筛选卡片">
+      <div class="filter-rail">
+        <div class="type-filters" role="group" aria-label="卡片类型">
+          <button class="type-button is-active" data-type="all" aria-pressed="true">全部 <span class="count" id="count-all">9</span></button>
+          <button class="type-button" data-type="debit" aria-pressed="false">储蓄卡 <span class="count" id="count-debit">1</span></button>
+          <button class="type-button" data-type="credit" aria-pressed="false">信用卡 <span class="count" id="count-credit">8</span></button>
+        </div>
+        <span class="filter-divider" aria-hidden="true"></span>
+        <button class="picker-trigger" id="bank-trigger" type="button" aria-label="按银行筛选：全部银行" aria-haspopup="listbox" aria-expanded="false" aria-controls="bank-options">
+          <span class="picker-icon" id="bank-picker-icon" aria-hidden="true"></span>
+          <span class="picker-label" id="bank-picker-label">全部银行</span>
+          <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 8 5 5 5-5"/></svg>
+        </button>
+        <button class="picker-trigger" id="network-trigger" type="button" aria-label="按卡组织筛选：全部卡组织" aria-haspopup="listbox" aria-expanded="false" aria-controls="network-options">
+          <span class="picker-icon" id="network-picker-icon" aria-hidden="true"></span>
+          <span class="picker-label" id="network-picker-label">全部卡组织</span>
+          <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 8 5 5 5-5"/></svg>
+        </button>
+        <span class="filter-divider network-divider" aria-hidden="true"></span>
+        <div class="network-filters" role="group" aria-label="快速选择卡组织">
+          <button class="network-button is-active" data-network="all" aria-pressed="true">全部</button>
+          <button class="network-button" data-network="visa" aria-pressed="false" aria-label="Visa" title="Visa"><img class="network-logo" src="./assets/logos/networks/visa.svg" alt="Visa" draggable="false"></button>
+          <button class="network-button" data-network="mastercard" aria-pressed="false" aria-label="Mastercard" title="Mastercard"><img class="network-logo" src="./assets/logos/networks/mastercard.svg" alt="Mastercard" draggable="false"></button>
+          <button class="network-button" data-network="unionpay" aria-pressed="false" aria-label="银联" title="银联"><img class="network-logo" src="./assets/logos/networks/unionpay.svg" alt="银联" draggable="false"></button>
+          <button class="network-button" data-network="amex" aria-pressed="false" aria-label="American Express" title="American Express"><img class="network-logo" src="./assets/logos/networks/amex.svg" alt="American Express" draggable="false"></button>
+          <button class="network-button" data-network="jcb" aria-pressed="false" aria-label="JCB" title="JCB"><img class="network-logo" src="./assets/logos/networks/jcb.svg" alt="JCB" draggable="false"></button>
+          <button class="network-button" data-network="discover" aria-pressed="false" aria-label="Discover" title="Discover"><img class="network-logo" src="./assets/logos/networks/discover.svg" alt="Discover" draggable="false"></button>
+        </div>
+      </div>
+    </section>
+    <div class="picker-menu" id="bank-options" role="listbox" aria-label="选择银行" popover="manual" hidden></div>
+    <div class="picker-menu" id="network-options" role="listbox" aria-label="选择卡组织" popover="manual" hidden></div>
+    <div class="results-note" id="results-note" hidden><p id="results-text"></p><button class="text-button" id="reset-filters" type="button">重置筛选 <span aria-hidden="true">↺</span></button></div>
+    <p id="live-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+    <section class="gallery" id="gallery" aria-label="卡片收藏" tabindex="-1"></section>
+    <section class="empty-state" id="empty-state" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="7" y="14" width="45" height="32" rx="7"/><path d="M8 25h43M16 36h8"/><circle cx="46" cy="44" r="10"/><path d="m53 51 7 7"/></svg>
+      <h2>还没有找到这张卡</h2>
+      <p>试试其他关键词，或调整筛选条件。</p>
+      <button class="primary-button" id="empty-reset" type="button">查看全部卡片</button>
+    </section>
+    <noscript><p class="no-script">请开启 JavaScript 以浏览卡片和使用筛选功能。</p></noscript>
+  </main>
+  <dialog id="card-dialog" class="card-dialog" aria-labelledby="detail-title">
+    <button class="icon-button dialog-close" id="close-dialog" type="button" aria-label="关闭卡面详情"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+    <div id="detail-art" class="detail-art"></div>
+    <div class="detail-information"><h2 id="detail-title"></h2><span id="detail-bank" class="detail-bank"></span><span class="detail-type" id="detail-type"></span></div>
+  </dialog>
+</body>
+</html>
