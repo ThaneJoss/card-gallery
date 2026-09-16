@@ -8,10 +8,11 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import sharp from 'sharp';
+import { stringify } from 'yaml';
 import { buildSite } from '../scripts/build.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const card = (id, image) => ({ id, name: '测试卡片', bank: '测试银行', type: 'credit', image });
+const card = (id, image) => ({ 编号: id, 名称: '测试卡片', 银行: '测试银行', 类型: '信用卡', 图片: image });
 
 async function fixture(t, cards) {
   const root = await mkdtemp(resolve(tmpdir(), 'card-gallery-'));
@@ -20,7 +21,7 @@ async function fixture(t, cards) {
     await mkdir(dirname(resolve(root, file)), { recursive: true });
     await cp(resolve(projectRoot, file), resolve(root, file), { recursive: true });
   }
-  await writeFile(resolve(root, 'cards.js'), `window.CARD_GALLERY_DATA = ${JSON.stringify(cards)};\n`);
+  await writeFile(resolve(root, 'cards.yaml'), stringify(cards));
   return root;
 }
 
@@ -52,15 +53,20 @@ async function imageServer(t) {
 test('远程 PNG/JPEG 与重定向可生成独立站点，源码不变，图片保持比例及透明度', async t => {
   const url = await imageServer(t);
   const root = await fixture(t, [card('png', `${url}/redirect`), card('jpeg', `${url}/image.jpg`)]);
-  const source = await readFile(resolve(root, 'cards.js'), 'utf8');
+  const source = await readFile(resolve(root, 'cards.yaml'), 'utf8');
   await buildSite({ root, log() {} });
 
-  assert.equal(await readFile(resolve(root, 'cards.js'), 'utf8'), source);
+  assert.equal(await readFile(resolve(root, 'cards.yaml'), 'utf8'), source);
+  await assert.rejects(readFile(resolve(root, 'cards.js')), { code: 'ENOENT' });
   const context = { window: {} };
   runInNewContext(await readFile(resolve(root, 'public/cards.js'), 'utf8'), context);
   const built = Array.from(context.window.CARD_GALLERY_DATA);
   assert.deepEqual(built.map(item => item.id), ['png', 'jpeg']);
+  assert.equal(context.window.CARD_GALLERY_BANK_LOGOS['中国银行'], './assets/logos/banks/boc.svg');
+  assert.equal(context.window.CARD_GALLERY_BANK_LOGOS['测试银行'], undefined);
   for (const item of built) {
+    assert.equal(Object.hasOwn(item, 'bankLogo'), false);
+    assert.equal(Object.hasOwn(item, 'keywords'), false);
     assert.match(item.image, /^\.\/cards\/\d+\.webp$/);
     const metadata = await sharp(resolve(root, 'public', item.image)).metadata();
     assert.equal(metadata.format, 'webp');
@@ -77,7 +83,7 @@ test('远程 PNG/JPEG 与重定向可生成独立站点，源码不变，图片�
   await assert.rejects(readFile(resolve(root, 'public/assets/collection.webp')), { code: 'ENOENT' });
 
   // 删除卡片后重新构建，旧卡面必须从发布目录消失。
-  await writeFile(resolve(root, 'cards.js'), 'window.CARD_GALLERY_DATA = [];\n');
+  await writeFile(resolve(root, 'cards.yaml'), '# 暂时没有卡片\n');
   await buildSite({ root, log() {} });
   assert.deepEqual(await readdir(resolve(root, 'public/cards')), []);
 });
@@ -102,7 +108,7 @@ test('下载失败或返回网页时指出具体卡片，并清理未完成的�
   }
 });
 
-test('重复 id 在下载前报错', async t => {
+test('重复编号在下载前报错', async t => {
   const root = await fixture(t, [card('same', 'https://example.com/one.png'), card('same', 'https://example.com/two.png')]);
-  await assert.rejects(buildSite({ root, log() {} }), /id「same」重复/);
+  await assert.rejects(buildSite({ root, log() {} }), /编号「same」重复/);
 });

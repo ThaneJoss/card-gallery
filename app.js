@@ -11,7 +11,7 @@
   const supportedNetworks = new Set(networkOptions.map(option => option.value));
 
   function readCards(data) {
-    if (!Array.isArray(data)) throw new Error('请检查 cards.js 是否存在、语法是否正确，以及 CARD_GALLERY_DATA 是否为数组。');
+    if (!Array.isArray(data)) throw new Error('卡片资料未加载，请确认已发布完整的网站文件后重试。');
     const ids = new Set();
     return Array.from(data, (item, index) => {
       const label = `第 ${index + 1} 张卡片`;
@@ -38,13 +38,10 @@
       if (!['credit', 'debit'].includes(type)) throw new Error(`${label}的 type 只能是 credit 或 debit。`);
       const networks = item.networks ?? [];
       if (!Array.isArray(networks) || ![...networks].every(network => supportedNetworks.has(network))) throw new Error(`${label}的 networks 须为卡组织数组：${[...supportedNetworks].join('、')}。`);
-      const keywords = item.keywords ?? '';
-      if (typeof keywords !== 'string' && !(Array.isArray(keywords) && [...keywords].every(word => typeof word === 'string'))) throw new Error(`${label}的 keywords 须为字符串或字符串数组。`);
       return {
         id, name: text('name'), bank: text('bank'), type,
         networks: [...new Set(networks)],
-        keywords: Array.isArray(keywords) ? keywords.join(' ') : keywords,
-        image: imagePath('image'), bankLogo: imagePath('bankLogo', false)
+        image: imagePath('image')
       };
     });
   }
@@ -74,10 +71,7 @@
   };
 
   const bankNames = [...new Set(cards.map(card => card.bank))];
-  const bankLogos = new Map();
-  for (const card of cards) {
-    if (card.bankLogo && !bankLogos.has(card.bank)) bankLogos.set(card.bank, card.bankLogo);
-  }
+  const bankLogos = new Map(Object.entries(window.CARD_GALLERY_BANK_LOGOS));
   const genericIcons = {
     bank:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-6 9 6H3ZM4 21h16M6 11v7M10 11v7M14 11v7M18 11v7"/></svg>',
     network:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h3"/></svg>'
@@ -199,7 +193,7 @@
     const words = filters.query.normalize('NFKC').trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
     const networkNames = card.networks.map(network => pickerOptions.network.find(option => option.value === network).label);
     const typeNames = card.type === 'debit' ? 'debit 储蓄卡 借记卡' : 'credit 信用卡';
-    const haystack = [card.name, card.bank, card.keywords, typeNames, ...card.networks, ...networkNames].join(' ').normalize('NFKC').toLocaleLowerCase();
+    const haystack = [card.name, card.bank, typeNames, ...card.networks, ...networkNames].join(' ').normalize('NFKC').toLocaleLowerCase();
     return (filters.type === 'all' || card.type === filters.type)
       && (filters.bank === 'all' || card.bank === filters.bank)
       && (filters.network === 'all' || card.networks.includes(filters.network))
@@ -227,7 +221,7 @@
       : `全部 ${cards.length} 张卡片 · ${bankNames.length} 家银行`;
     $('#empty-state').hidden = visibleCards.length !== 0;
     $('#empty-state h2').textContent = cards.length ? '还没有找到这张卡' : '还没有收录卡片';
-    $('#empty-state p').textContent = cards.length ? '试试其他关键词，或调整筛选条件。' : '收录的卡片会显示在这里。';
+    $('#empty-state p').textContent = cards.length ? '换个搜索词，或调整筛选条件。' : '收录的卡片会显示在这里。';
     $('#empty-reset').hidden = cards.length === 0;
     gallery.hidden = visibleCards.length === 0;
     $('#live-status').textContent = `当前显示 ${visibleCards.length} 张卡片，共收藏 ${cards.length} 张。`;
@@ -331,7 +325,7 @@
       inputSchema: {
         type: 'object',
         properties: {
-          query: { type: 'string', maxLength: 200, description: 'Card name, bank, or visual keyword, such as 雪山 or 海洋.' },
+          query: { type: 'string', maxLength: 200, description: 'Card name, bank, card type, or payment network, such as 中国银行 or Visa.' },
           type: { type: 'string', enum: types },
           bank: { type: 'string', enum: banks },
           network: { type: 'string', enum: networks }
@@ -344,7 +338,7 @@
         const allowed = ['query', 'type', 'bank', 'network'];
         if (Object.keys(input).some(key => !allowed.includes(key))) throw new Error('存在不支持的筛选条件。');
         const next = { query: '', type: 'all', bank: 'all', network: 'all', ...input };
-        if (typeof next.query !== 'string' || next.query.length > 200) throw new Error('搜索关键词须为 200 字以内的文本。');
+        if (typeof next.query !== 'string' || next.query.length > 200) throw new Error('搜索内容须为 200 字以内的文本。');
         if (!types.includes(next.type) || !banks.includes(next.bank) || !networks.includes(next.network)) throw new Error('请选择有效的卡片类型、银行和卡组织。');
         if (dialog.open) dialog.close();
         closePicker();
