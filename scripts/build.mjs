@@ -1,8 +1,8 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runInNewContext } from 'node:vm';
 import sharp from 'sharp';
+import { parseCards } from './card-data.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -17,22 +17,7 @@ async function readImage(source, root) {
 
 export async function buildSite({ root = projectRoot, log = console.log } = {}) {
   const output = resolve(root, 'public');
-  const context = { window: {} };
-  runInNewContext(await readFile(resolve(root, 'cards.js'), 'utf8'), context, { filename: 'cards.js' });
-  const cards = context.window.CARD_GALLERY_DATA;
-  if (!Array.isArray(cards)) throw new Error('cards.js 中的 CARD_GALLERY_DATA 必须是数组。');
-  const ids = new Set();
-  for (const [index, card] of cards.entries()) {
-    if (!card || typeof card.id !== 'string' || !card.id.trim()) {
-      throw new Error(`第 ${index + 1} 张卡片缺少 id。`);
-    }
-    const id = card.id.trim();
-    if (ids.has(id)) throw new Error(`卡片 id「${id}」重复。`);
-    ids.add(id);
-    if (typeof card.image !== 'string' || !card.image.trim()) {
-      throw new Error(`卡片「${id}」缺少 image。`);
-    }
-  }
+  const cards = parseCards(await readFile(resolve(root, 'cards.yaml'), 'utf8'));
 
   await rm(output, { recursive: true, force: true });
   await mkdir(resolve(output, 'cards'), { recursive: true });
@@ -67,7 +52,7 @@ export async function buildSite({ root = projectRoot, log = console.log } = {}) 
       if (failure) throw failure.reason;
     }
 
-    await writeFile(resolve(output, 'cards.js'), `// 自动生成；请编辑项目根目录的 cards.js。\nwindow.CARD_GALLERY_DATA = ${JSON.stringify(builtCards, null, 2)};\n`);
+    await writeFile(resolve(output, 'cards.js'), `// 自动生成；请编辑项目根目录的 cards.yaml。\nwindow.CARD_GALLERY_DATA = ${JSON.stringify(builtCards, null, 2)};\n`);
     log(`构建完成：${cards.length} 张卡片，发布目录 public/。`);
   } catch (error) {
     await rm(output, { recursive: true, force: true });

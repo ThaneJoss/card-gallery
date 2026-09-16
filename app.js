@@ -11,7 +11,7 @@
   const supportedNetworks = new Set(networkOptions.map(option => option.value));
 
   function readCards(data) {
-    if (!Array.isArray(data)) throw new Error('请检查 cards.js 是否存在、语法是否正确，以及 CARD_GALLERY_DATA 是否为数组。');
+    if (!Array.isArray(data)) throw new Error('卡片资料未加载，请确认已发布完整的网站文件后重试。');
     const ids = new Set();
     return Array.from(data, (item, index) => {
       const label = `第 ${index + 1} 张卡片`;
