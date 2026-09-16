@@ -1,22 +1,67 @@
 (() => {
   'use strict';
 
-  const cards = [
-    { id:'boc-mountain', name:'长城环球通白金卡', bank:'中国银行', type:'credit', networks:['visa','unionpay'], keywords:'雪山 月夜 山峰 蓝色 长城 环球通 bank of china boc', art:[70,252,438,194] },
-    { id:'icbc-spring', name:'工银香格里拉联名卡', bank:'中国工商银行', type:'credit', networks:['mastercard','unionpay'], keywords:'樱花 春日 古塔 粉色 工行 icbc', art:[551,252,435,194] },
-    { id:'abc-valley', name:'农行悠然白金卡', bank:'中国农业银行', type:'credit', networks:['unionpay'], keywords:'山谷 田园 绿色 河流 农行 abc', art:[1029,252,440,194] },
-    { id:'ccb-city', name:'龙卡全球支付信用卡', bank:'中国建设银行', type:'credit', networks:['visa','mastercard'], keywords:'城市 天际线 广州 广州塔 日落 建行 ccb', art:[70,506,438,188] },
-    { id:'cmb-coast', name:'经典白金卡', bank:'招商银行', type:'credit', networks:['visa','amex'], keywords:'灯塔 海岸 日落 夕阳 经典白 招行 cmb', art:[551,506,435,188] },
-    { id:'bocom-wall', name:'太平洋标准信用卡', bank:'交通银行', type:'credit', networks:['mastercard','jcb','unionpay'], keywords:'长城 山脉 中国 蓝色 交行 bocom', art:[1029,506,440,188] },
-    { id:'cib-ink', name:'兴业悠系列信用卡', bank:'兴业银行', type:'credit', networks:['unionpay'], keywords:'水墨 江南 小舟 湖泊 黑白 冬日 cib', art:[70,756,438,188] },
-    { id:'citic-autumn', name:'颜卡·秋日限定', bank:'中信银行', type:'credit', networks:['unionpay'], keywords:'秋天 枫叶 古塔 红色 橙色 citic', art:[551,756,435,188] },
-    { id:'spdb-ocean', name:'浦发梦卡', bank:'浦发银行', type:'debit', networks:['unionpay'], keywords:'鲸鱼 蓝鲸 海洋 大海 蓝色 浦发 spdb', art:[1029,756,440,188] }
-  ];
-  const state = { type:'all', bank:'all', network:'all', query:'' };
-  let visibleCards = [...cards];
-  let lastFocusedCard = null;
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const networkOptions = [
+    {value:'visa',label:'Visa'}, {value:'mastercard',label:'Mastercard'},
+    {value:'unionpay',label:'银联 UnionPay'}, {value:'amex',label:'American Express'},
+    {value:'jcb',label:'JCB'}, {value:'discover',label:'Discover'}
+  ];
+  const supportedNetworks = new Set(networkOptions.map(option => option.value));
+
+  function readCards(data) {
+    if (!Array.isArray(data)) throw new Error('请检查 cards.js 是否存在、语法是否正确，以及 CARD_GALLERY_DATA 是否为数组。');
+    const ids = new Set();
+    return Array.from(data, (item, index) => {
+      const label = `第 ${index + 1} 张卡片`;
+      if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error(`${label}必须是一个对象。`);
+      const text = (field, required = true) => {
+        const value = item[field];
+        if (!required && (value === undefined || value === null)) return '';
+        if (typeof value !== 'string' || (required && !value.trim())) throw new Error(`${label}的 ${field} 必须是${required ? '非空' : ''}字符串。`);
+        return value.trim();
+      };
+      const imagePath = (field, required = true) => {
+        const value = text(field, required);
+        if (!value) return '';
+        let url;
+        try { url = new URL(value, document.baseURI); } catch { throw new Error(`${label}的 ${field} 图片路径无效。`); }
+        const protocols = location.protocol === 'file:' ? ['file:', 'https:', 'http:'] : ['https:', 'http:'];
+        if (!protocols.includes(url.protocol)) throw new Error(`${label}的 ${field} 请使用相对路径或 HTTP(S) 图片地址。`);
+        return value;
+      };
+      const id = text('id');
+      if (ids.has(id)) throw new Error(`${label}的 id「${id}」重复，每张卡片需要唯一的 id。`);
+      ids.add(id);
+      const type = text('type');
+      if (!['credit', 'debit'].includes(type)) throw new Error(`${label}的 type 只能是 credit 或 debit。`);
+      const networks = item.networks ?? [];
+      if (!Array.isArray(networks) || ![...networks].every(network => supportedNetworks.has(network))) throw new Error(`${label}的 networks 须为卡组织数组：${[...supportedNetworks].join('、')}。`);
+      const keywords = item.keywords ?? '';
+      if (typeof keywords !== 'string' && !(Array.isArray(keywords) && [...keywords].every(word => typeof word === 'string'))) throw new Error(`${label}的 keywords 须为字符串或字符串数组。`);
+      return {
+        id, name: text('name'), bank: text('bank'), type,
+        networks: [...new Set(networks)],
+        keywords: Array.isArray(keywords) ? keywords.join(' ') : keywords,
+        image: imagePath('image'), bankLogo: imagePath('bankLogo', false)
+      };
+    });
+  }
+
+  let cards;
+  try {
+    cards = readCards(window.CARD_GALLERY_DATA);
+  } catch (error) {
+    $('#data-status').hidden = false;
+    $('#data-message').textContent = error.message;
+    return;
+  }
+
+  const state = { type:'all', bank:'all', network:'all', query:'' };
+  let visibleCards = [...cards];
+  let renderedCardIds = '';
+  let lastFocusedCard = null;
   const gallery = $('#gallery');
   const dialog = $('#card-dialog');
   const search = $('#search-input');
@@ -24,31 +69,41 @@
   const cardRatio = 85.6 / 53.98;
 
   const escapeHTML = (text) => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  const sprite = (rect, className, alt = '') => {
-    const [x,y,w,h] = rect;
-    return `<span class="sprite ${className}" style="--x:${x};--y:${y};--w:${w};--h:${h}"><img src="./assets/collection.webp" alt="${escapeHTML(alt)}" draggable="false" decoding="async"></span>`;
+  const cardArt = (card, {lazy = false, priority = false} = {}) => {
+    return `<span class="card-art"><img data-card-image src="${escapeHTML(card.image)}" alt="${escapeHTML(`${card.bank} ${card.name}卡面`)}" draggable="false" decoding="async" loading="${lazy ? 'lazy' : 'eager'}" fetchpriority="${priority ? 'high' : 'auto'}"><span class="image-fallback" hidden>卡面暂不可用</span></span>`;
   };
 
-  const bankLogos = {
-    '中国银行':'boc', '中国工商银行':'icbc', '中国农业银行':'abc',
-    '中国建设银行':'ccb', '招商银行':'cmb', '交通银行':'bocom',
-    '兴业银行':'cib', '中信银行':'citic', '浦发银行':'spdb'
-  };
+  const bankNames = [...new Set(cards.map(card => card.bank))];
+  const bankLogos = new Map();
+  for (const card of cards) {
+    if (card.bankLogo && !bankLogos.has(card.bank)) bankLogos.set(card.bank, card.bankLogo);
+  }
   const genericIcons = {
     bank:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-6 9 6H3ZM4 21h16M6 11v7M10 11v7M14 11v7M18 11v7"/></svg>',
     network:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h3"/></svg>'
   };
-  const bankLogo = (bank) => `<img class="bank-logo" src="./assets/logos/banks/${bankLogos[bank]}.svg" alt="${escapeHTML(bank)}" title="${escapeHTML(bank)}" draggable="false">`;
+  const fallbackBankLogo = (bank) => `<span class="bank-logo bank-logo-fallback" role="img" aria-label="${escapeHTML(bank)}" title="${escapeHTML(bank)}">${genericIcons.bank}</span>`;
+  const bankLogo = (bank) => bankLogos.has(bank)
+    ? `<img class="bank-logo" data-bank-logo src="${escapeHTML(bankLogos.get(bank))}" alt="${escapeHTML(bank)}" title="${escapeHTML(bank)}" draggable="false">`
+    : fallbackBankLogo(bank);
   const pickerOptions = {
-    bank:[{value:'all',label:'全部银行'}, ...Object.keys(bankLogos).map(bank => ({value:bank,label:bank,logo:`./assets/logos/banks/${bankLogos[bank]}.svg`}))],
-    network:[
-      {value:'all',label:'全部卡组织'},
-      {value:'visa',label:'Visa'}, {value:'mastercard',label:'Mastercard'},
-      {value:'unionpay',label:'银联 UnionPay'}, {value:'amex',label:'American Express'},
-      {value:'jcb',label:'JCB'}, {value:'discover',label:'Discover'}
-    ].map(item => item.value === 'all' ? item : {...item,logo:`./assets/logos/networks/${item.value}.svg`})
+    bank:[{value:'all',label:'全部银行'}, ...bankNames.map(bank => ({value:bank,label:bank,logo:bankLogos.get(bank)}))],
+    network:[{value:'all',label:'全部卡组织'}, ...networkOptions.map(item => ({...item,logo:`./assets/logos/networks/${item.value}.svg`}))]
   };
-  const optionIcon = (kind, option) => option.logo ? `<img src="${option.logo}" alt="" draggable="false">` : genericIcons[kind];
+  const optionIcon = (kind, option) => option.logo ? `<img src="${escapeHTML(option.logo)}" data-option-icon="${kind}" alt="" draggable="false">` : genericIcons[kind];
+
+  document.addEventListener('error', event => {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement)) return;
+    if (image.hasAttribute('data-card-image')) {
+      image.hidden = true;
+      image.nextElementSibling.hidden = false;
+    } else if (image.hasAttribute('data-bank-logo')) {
+      image.outerHTML = fallbackBankLogo(image.alt);
+    } else if (image.dataset.optionIcon) {
+      image.outerHTML = genericIcons[image.dataset.optionIcon];
+    }
+  }, true);
 
   function syncPickers() {
     for (const kind of ['bank','network']) {
@@ -57,6 +112,7 @@
       $(`#${kind}-picker-icon`).innerHTML = optionIcon(kind, selected);
       const trigger = $(`#${kind}-trigger`);
       trigger.title = selected.label;
+      trigger.classList.toggle('is-filtered', state[kind] !== 'all');
       trigger.setAttribute('aria-label', `按${kind === 'bank' ? '银行' : '卡组织'}筛选：${selected.label}`);
       $(`#${kind}-options`).querySelectorAll('[role="option"]').forEach(option => {
         option.setAttribute('aria-selected', String(option.dataset.value === state[kind]));
@@ -135,22 +191,15 @@
   document.addEventListener('pointerdown', event => {
     if (activePicker && !$(`#${activePicker}-options`).contains(event.target) && !$(`#${activePicker}-trigger`).contains(event.target)) closePicker();
   });
-  function updateToolbarHint() {
-    const rail = $('.filter-rail');
-    const remaining = rail.scrollWidth-rail.clientWidth-rail.scrollLeft;
-    $('.filters').classList.toggle('has-overflow',rail.scrollWidth>rail.clientWidth+1);
-    $('.filters').classList.toggle('at-end',remaining<=1);
-  }
-  $('.filter-rail').addEventListener('scroll', () => { closePicker(); updateToolbarHint(); }, {passive:true});
-  requestAnimationFrame(updateToolbarHint);
-
   $('#count-all').textContent = cards.length;
   $('#count-debit').textContent = cards.filter(card => card.type === 'debit').length;
   $('#count-credit').textContent = cards.filter(card => card.type === 'credit').length;
 
   function matches(card, filters = state) {
-    const words = filters.query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-    const haystack = [card.name, card.bank, card.keywords, ...card.networks].join(' ').toLocaleLowerCase();
+    const words = filters.query.normalize('NFKC').trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    const networkNames = card.networks.map(network => pickerOptions.network.find(option => option.value === network).label);
+    const typeNames = card.type === 'debit' ? 'debit 储蓄卡 借记卡' : 'credit 信用卡';
+    const haystack = [card.name, card.bank, card.keywords, typeNames, ...card.networks, ...networkNames].join(' ').normalize('NFKC').toLocaleLowerCase();
     return (filters.type === 'all' || card.type === filters.type)
       && (filters.bank === 'all' || card.bank === filters.bank)
       && (filters.network === 'all' || card.networks.includes(filters.network))
@@ -164,18 +213,22 @@
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-pressed', String(active));
     });
-    $$('.network-button').forEach(button => {
-      const active = button.dataset.network === state.network;
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-pressed', String(active));
-    });
     syncPickers();
     $('#clear-search').hidden = search.value.length === 0;
-    gallery.innerHTML = visibleCards.map((card, index) => `<article class="gallery-card" style="--index:${Math.min(index, 5)}"><button class="card-button" type="button" data-card="${card.id}" aria-label="查看${escapeHTML(card.bank)}${escapeHTML(card.name)}卡面">${sprite(card.art, 'card-art', `${card.bank} ${card.name}`)}<span class="card-caption"><span class="card-name">${escapeHTML(card.name)}</span><span class="card-bank">${bankLogo(card.bank)}</span></span></button></article>`).join('');
+    const nextCardIds = JSON.stringify(visibleCards.map(card => card.id));
+    if (renderedCardIds !== nextCardIds) {
+      gallery.innerHTML = visibleCards.map((card, index) => `<article class="gallery-card" style="--index:${Math.min(index, 5)}"><button class="card-button" type="button" data-card="${escapeHTML(card.id)}" aria-haspopup="dialog" aria-label="查看${escapeHTML(card.bank)}${escapeHTML(card.name)}卡面">${cardArt(card, {lazy:index >= 3, priority:index === 0})}<span class="card-caption"><span class="card-name">${escapeHTML(card.name)}</span><span class="card-bank">${bankLogo(card.bank)}</span></span></button></article>`).join('');
+      renderedCardIds = nextCardIds;
+    }
     const filtered = state.type !== 'all' || state.bank !== 'all' || state.network !== 'all' || state.query.trim() !== '';
-    $('#results-note').hidden = !filtered;
-    $('#results-text').textContent = `找到 ${visibleCards.length} 张卡片${state.query.trim() ? ` · “${state.query.trim()}”` : ''}`;
+    $('#reset-filters').hidden = !filtered;
+    $('#results-text').textContent = filtered
+      ? `找到 ${visibleCards.length} 张卡片${state.query.trim() ? ` · “${state.query.trim()}”` : ''}`
+      : `全部 ${cards.length} 张卡片 · ${bankNames.length} 家银行`;
     $('#empty-state').hidden = visibleCards.length !== 0;
+    $('#empty-state h2').textContent = cards.length ? '还没有找到这张卡' : '还没有收录卡片';
+    $('#empty-state p').textContent = cards.length ? '试试其他关键词，或调整筛选条件。' : '收录的卡片会显示在这里。';
+    $('#empty-reset').hidden = cards.length === 0;
     gallery.hidden = visibleCards.length === 0;
     $('#live-status').textContent = `当前显示 ${visibleCards.length} 张卡片，共收藏 ${cards.length} 张。`;
   }
@@ -190,7 +243,7 @@
   function showCard(id) {
     const card = cards.find(item => item.id === id);
     if (!card) return;
-    $('#detail-art').innerHTML = sprite(card.art, 'card-art', `${card.bank} ${card.name}卡面`);
+    $('#detail-art').innerHTML = cardArt(card, {priority:true});
     $('#detail-title').textContent = card.name;
     $('#detail-bank').innerHTML = bankLogo(card.bank);
     $('#detail-type').textContent = card.type === 'debit' ? '储蓄卡' : '信用卡';
@@ -227,7 +280,6 @@
   }
   function handleViewportChange() {
     closePicker();
-    updateToolbarHint();
     if (dialog.open) fitDialog();
   }
   window.addEventListener('resize',handleViewportChange,{passive:true});
@@ -238,9 +290,13 @@
     const button = event.target.closest('[data-type]');
     if (button) { state.type = button.dataset.type; render(); }
   });
-  $('.network-filters').addEventListener('click', event => {
-    const button = event.target.closest('[data-network]');
-    if (button) { state.network = button.dataset.network; render(); }
+  document.addEventListener('keydown', event => {
+    const editing = event.target instanceof HTMLElement && (event.target.isContentEditable || event.target.closest('input, textarea, select'));
+    if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.isComposing && !editing && !dialog.open) {
+      event.preventDefault();
+      closePicker();
+      search.focus();
+    }
   });
   search.addEventListener('input', () => { state.query = search.value; render(); });
   $('#search-form').addEventListener('submit', event => { event.preventDefault(); search.blur(); });
@@ -257,15 +313,17 @@
     const rect = dialog.getBoundingClientRect();
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
   });
-  dialog.addEventListener('close', () => { if (lastFocusedCard?.isConnected) lastFocusedCard.focus(); });
+  dialog.addEventListener('close', () => { if (lastFocusedCard?.isConnected) lastFocusedCard.focus({preventScroll:true}); });
 
   render();
+  $('.filters').hidden = false;
+  $('.results-note').hidden = false;
 
   if (document.modelContext?.registerTool) {
     const lifecycle = new AbortController();
     const types = ['all', 'debit', 'credit'];
-    const networks = ['all', 'visa', 'mastercard', 'unionpay', 'amex', 'jcb', 'discover'];
-    const banks = ['all', ...new Set(cards.map(card => card.bank))];
+    const networks = ['all', ...supportedNetworks];
+    const banks = ['all', ...bankNames];
     const tool = {
       name: 'filter_card_gallery',
       title: '筛选卡片画廊',
