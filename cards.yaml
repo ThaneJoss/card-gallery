@@ -1,10 +1,10 @@
 # 卡片资料：日常只编辑这个文件，排列顺序就是网页展示顺序。
 # 每张卡以「- 名称:」开头，其余字段前面保留两个空格，不要用 Tab。
-# 类型填写「信用卡」或「储蓄卡」；图片填写 https:// 开头的图片直链。
+# 类型填写「信用卡」或「储蓄卡」；卡面下载到 assets/cards/，图片填写对应本地路径。
 # 卡组织只有一个时直接填写；多个时像下面一样分行列出。
 # 银行图标按银行名称自动匹配，不需要逐张填写。
 # 编号可以省略，由构建自动生成；复制已有卡片时请修改或删除编号。
-# 修改后运行 pnpm check:cards 检查，部署时会自动下载并转换图片。
+# 部署时从本地读取卡面并转换图片，无需再次请求来源网站。
 
 - 名称: 长城环球通白金卡
   银行: 中国银行
@@ -15,67 +15,11 @@
     - 银联
   编号: boc-mountain
 
-- 名称: 工银香格里拉联名卡
+- 名称: 马年生肖卡马到成功版
   银行: 中国工商银行
-  类型: 信用卡
-  图片: ./assets/cards/icbc-spring.webp
-  卡组织:
-    - Mastercard
-    - 银联
-  编号: icbc-spring
-
-- 名称: 农行悠然白金卡
-  银行: 中国农业银行
-  类型: 信用卡
-  图片: ./assets/cards/abc-valley.webp
-  卡组织: 银联
-  编号: abc-valley
-
-- 名称: 龙卡全球支付信用卡
-  银行: 中国建设银行
-  类型: 信用卡
-  图片: ./assets/cards/ccb-city.webp
-  卡组织:
-    - Visa
-    - Mastercard
-  编号: ccb-city
-
-- 名称: 经典白金卡
-  银行: 招商银行
-  类型: 信用卡
-  图片: ./assets/cards/cmb-coast.webp
-  卡组织:
-    - Visa
-    - Amex
-  编号: cmb-coast
-
-- 名称: 太平洋标准信用卡
-  银行: 交通银行
-  类型: 信用卡
-  图片: ./assets/cards/bocom-wall.webp
-  卡组织:
-    - Mastercard
-    - JCB
-    - 银联
-  编号: bocom-wall
-
-- 名称: 兴业悠系列信用卡
-  银行: 兴业银行
-  类型: 信用卡
-  图片: ./assets/cards/cib-ink.webp
-  卡组织: 银联
-  编号: cib-ink
-
-- 名称: 颜卡·秋日限定
-  银行: 中信银行
-  类型: 信用卡
-  图片: ./assets/cards/citic-autumn.webp
-  卡组织: 银联
-  编号: citic-autumn
-
-- 名称: 浦发梦卡
-  银行: 浦发银行
   类型: 储蓄卡
-  图片: ./assets/cards/spdb-ocean.webp
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴，337×213，未确认官方原始出处）。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/155.jpg
+  图片: ./assets/cards/icbc-horse-success.jpg
   卡组织: 银联
-  编号: spdb-ocean
+  编号: icbc-horse-success
