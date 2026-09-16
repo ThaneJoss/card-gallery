@@ -85,7 +85,9 @@ test('远程 PNG/JPEG 与重定向可生成独立站点，源码不变，图片�
 test('现有本地示例仍可构建，但不会把原始卡面目录发布出去', async t => {
   const root = await fixture(t, [card('local', './assets/cards/local.webp')]);
   await mkdir(resolve(root, 'assets/cards'));
-  await cp(resolve(projectRoot, 'assets/cards/boc-mountain.webp'), resolve(root, 'assets/cards/local.webp'));
+  await sharp({ create: { width: 400, height: 250, channels: 3, background: '#2288cc' } })
+    .webp()
+    .toFile(resolve(root, 'assets/cards/local.webp'));
   await buildSite({ root, log() {} });
   assert.equal((await sharp(resolve(root, 'public/cards/1.webp')).metadata()).format, 'webp');
   await assert.rejects(readdir(resolve(root, 'public/assets/cards')), { code: 'ENOENT' });
