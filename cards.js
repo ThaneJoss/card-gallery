@@ -1,5 +1,6 @@
 // 卡片资料：新增、删除或调整下面的记录即可，数组顺序就是展示顺序。
-// image：卡面图片路径，相对于 index.html；图片建议放在 assets/cards/。
+// image：填写远程图片直链（https://...）；部署构建时自动下载并转成 WebP。
+// 现有示例仍可使用 assets/cards/ 下的本地图片；新增卡片无需保存图片到仓库。
 // bankLogo：银行图标路径，可省略；省略时显示通用银行图标。
 // type：credit（信用卡）或 debit（储蓄卡）。
 // networks：visa、mastercard、unionpay、amex、jcb、discover，可填写多个。
