@@ -18,9 +18,6 @@ test('中文 YAML 支持注释、图片直链、单项和多项卡组织，并�
     - Visa
     - 银联
     - VISA
-  关键词:
-    - 旅行
-    - 蓝色
 
 - 名称: 日常储蓄卡
   银行: 招商银行
@@ -33,11 +30,11 @@ test('中文 YAML 支持注释、图片直链、单项和多项卡组织，并�
     {
       id: 'card-1', name: '我的旅行卡', bank: '中国银行', type: 'credit',
       image: 'https://example.com/card.jpg?size=large&v=2#front',
-      networks: ['visa', 'unionpay'], keywords: '旅行 蓝色', bankLogo: ''
+      networks: ['visa', 'unionpay']
     },
     {
       id: 'everyday', name: '日常储蓄卡', bank: '招商银行', type: 'debit',
-      image: './assets/cards/local.webp', networks: ['unionpay'], keywords: '', bankLogo: ''
+      image: './assets/cards/local.webp', networks: ['unionpay']
     }
   ]);
 });
@@ -46,8 +43,6 @@ test('只需填写四个必填字段，清空文件可以清空收藏', () => {
   const cards = parseCards(stringify([minimalCard]));
   assert.equal(cards[0].id, 'card-1');
   assert.deepEqual(cards[0].networks, []);
-  assert.equal(cards[0].keywords, '');
-  assert.equal(cards[0].bankLogo, '');
   assert.deepEqual(parseCards(''), []);
   assert.deepEqual(parseCards('# 暂时没有卡片\n'), []);
 });
@@ -68,7 +63,7 @@ test('字段拼写、必填项、类型和卡组织错误均能定位到具体�
     [{ ...minimalCard, 图片: '' }, /「图片」须为非空文本/],
     [{ ...minimalCard, 类型: 'credit' }, /「类型」请填写「信用卡」或「储蓄卡」/],
     [{ ...minimalCard, 卡组织: 'Visaa' }, /卡组织「Visaa」无效/],
-    [{ ...minimalCard, 关键词: [123] }, /「关键词」须为文本或文本列表/]
+    [{ ...minimalCard, 卡组织: [123] }, /「卡组织」须为文本或文本列表/]
   ];
   for (const [entry, message] of invalidCards) {
     assert.throws(() => parseCards(stringify([minimalCard, entry])), error => {

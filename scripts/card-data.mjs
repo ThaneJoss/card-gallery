@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 
-const fields = new Set(['名称', '银行', '类型', '图片', '卡组织', '关键词', '银行图标', '编号']);
+const fields = new Set(['名称', '银行', '类型', '图片', '卡组织', '编号']);
 const types = new Map([['信用卡', 'credit'], ['储蓄卡', 'debit']]);
 const networks = new Map([
   ['visa', 'visa'], ['mastercard', 'mastercard'], ['万事达', 'mastercard'],
@@ -59,8 +59,7 @@ export function parseCards(source) {
     return {
       id, name: text('名称'), bank: text('银行'), type,
       networks: [...new Set(cardNetworks)],
-      keywords: list('关键词').join(' '),
-      image: text('图片'), bankLogo: text('银行图标', false)
+      image: text('图片')
     };
   });
 }

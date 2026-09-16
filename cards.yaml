@@ -2,6 +2,7 @@
 # 每张卡以「- 名称:」开头，其余字段前面保留两个空格，不要用 Tab。
 # 类型填写「信用卡」或「储蓄卡」；图片填写 https:// 开头的图片直链。
 # 卡组织只有一个时直接填写；多个时像下面一样分行列出。
+# 银行图标按银行名称自动匹配，不需要逐张填写。
 # 编号可以省略，由构建自动生成；复制已有卡片时请修改或删除编号。
 # 修改后运行 pnpm check:cards 检查，部署时会自动下载并转换图片。
 
@@ -12,8 +13,6 @@
   卡组织:
     - Visa
     - 银联
-  关键词: 雪山 月夜 山峰 蓝色 长城 环球通 bank of china boc
-  银行图标: ./assets/logos/banks/boc.svg
   编号: boc-mountain
 
 - 名称: 工银香格里拉联名卡
@@ -23,8 +22,6 @@
   卡组织:
     - Mastercard
     - 银联
-  关键词: 樱花 春日 古塔 粉色 工行 icbc
-  银行图标: ./assets/logos/banks/icbc.svg
   编号: icbc-spring
 
 - 名称: 农行悠然白金卡
@@ -32,8 +29,6 @@
   类型: 信用卡
   图片: ./assets/cards/abc-valley.webp
   卡组织: 银联
-  关键词: 山谷 田园 绿色 河流 农行 abc
-  银行图标: ./assets/logos/banks/abc.svg
   编号: abc-valley
 
 - 名称: 龙卡全球支付信用卡
@@ -43,8 +38,6 @@
   卡组织:
     - Visa
     - Mastercard
-  关键词: 城市 天际线 广州 广州塔 日落 建行 ccb
-  银行图标: ./assets/logos/banks/ccb.svg
   编号: ccb-city
 
 - 名称: 经典白金卡
@@ -54,8 +47,6 @@
   卡组织:
     - Visa
     - Amex
-  关键词: 灯塔 海岸 日落 夕阳 经典白 招行 cmb
-  银行图标: ./assets/logos/banks/cmb.svg
   编号: cmb-coast
 
 - 名称: 太平洋标准信用卡
@@ -66,8 +57,6 @@
     - Mastercard
     - JCB
     - 银联
-  关键词: 长城 山脉 中国 蓝色 交行 bocom
-  银行图标: ./assets/logos/banks/bocom.svg
   编号: bocom-wall
 
 - 名称: 兴业悠系列信用卡
@@ -75,8 +64,6 @@
   类型: 信用卡
   图片: ./assets/cards/cib-ink.webp
   卡组织: 银联
-  关键词: 水墨 江南 小舟 湖泊 黑白 冬日 cib
-  银行图标: ./assets/logos/banks/cib.svg
   编号: cib-ink
 
 - 名称: 颜卡·秋日限定
@@ -84,8 +71,6 @@
   类型: 信用卡
   图片: ./assets/cards/citic-autumn.webp
   卡组织: 银联
-  关键词: 秋天 枫叶 古塔 红色 橙色 citic
-  银行图标: ./assets/logos/banks/citic.svg
   编号: citic-autumn
 
 - 名称: 浦发梦卡
@@ -93,6 +78,4 @@
   类型: 储蓄卡
   图片: ./assets/cards/spdb-ocean.webp
   卡组织: 银联
-  关键词: 鲸鱼 蓝鲸 海洋 大海 蓝色 浦发 spdb
-  银行图标: ./assets/logos/banks/spdb.svg
   编号: spdb-ocean

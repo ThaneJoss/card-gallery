@@ -62,7 +62,11 @@ test('远程 PNG/JPEG 与重定向可生成独立站点，源码不变，图片�
   runInNewContext(await readFile(resolve(root, 'public/cards.js'), 'utf8'), context);
   const built = Array.from(context.window.CARD_GALLERY_DATA);
   assert.deepEqual(built.map(item => item.id), ['png', 'jpeg']);
+  assert.equal(context.window.CARD_GALLERY_BANK_LOGOS['中国银行'], './assets/logos/banks/boc.svg');
+  assert.equal(context.window.CARD_GALLERY_BANK_LOGOS['测试银行'], undefined);
   for (const item of built) {
+    assert.equal(Object.hasOwn(item, 'bankLogo'), false);
+    assert.equal(Object.hasOwn(item, 'keywords'), false);
     assert.match(item.image, /^\.\/cards\/\d+\.webp$/);
     const metadata = await sharp(resolve(root, 'public', item.image)).metadata();
     assert.equal(metadata.format, 'webp');

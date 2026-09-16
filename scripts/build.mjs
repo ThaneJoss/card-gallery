@@ -52,7 +52,11 @@ export async function buildSite({ root = projectRoot, log = console.log } = {}) 
       if (failure) throw failure.reason;
     }
 
-    await writeFile(resolve(output, 'cards.js'), `// 自动生成；请编辑项目根目录的 cards.yaml。\nwindow.CARD_GALLERY_DATA = ${JSON.stringify(builtCards, null, 2)};\n`);
+    const { assets } = JSON.parse(await readFile(resolve(root, 'assets/logos/sources.json'), 'utf8'));
+    const bankLogos = Object.fromEntries(assets
+      .filter(asset => asset.file.startsWith('banks/'))
+      .map(asset => [asset.name, `./assets/logos/${asset.file}`]));
+    await writeFile(resolve(output, 'cards.js'), `// 自动生成；请编辑项目根目录的 cards.yaml。\nwindow.CARD_GALLERY_DATA = ${JSON.stringify(builtCards, null, 2)};\n\n// 银行图标根据 assets/logos/sources.json 自动匹配。\nwindow.CARD_GALLERY_BANK_LOGOS = ${JSON.stringify(bankLogos, null, 2)};\n`);
     log(`构建完成：${cards.length} 张卡片，发布目录 public/。`);
   } catch (error) {
     await rm(output, { recursive: true, force: true });
