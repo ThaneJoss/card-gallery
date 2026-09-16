@@ -5,6 +5,7 @@
   "packageManager": "pnpm@11.25.0",
   "scripts": {
     "check:cards": "node scripts/card-data.mjs",
+    "localize:cards": "node scripts/localize-card-images.mjs",
     "build": "node scripts/build.mjs",
     "test": "node --test"
   },
