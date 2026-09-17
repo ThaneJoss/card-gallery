@@ -14,6 +14,7 @@
   --gutter: 48px;
   --radius-control: 6px;
   --radius-stage: 8px;
+  --radius-card: 10px;
   --radius-dialog: 12px;
   --motion: 200ms ease;
   --card-ratio: 85.6 / 53.98;
@@ -246,14 +247,20 @@ button svg, .search > svg {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
+  container-type: size;
   border-radius: var(--radius-stage);
   background: var(--surface-stage);
 }
+/* 根据原图比例收紧图片元素，让圆角贴合卡面边缘。 */
 .card-art img {
+  --image-ratio: calc(var(--card-ratio));
   position: absolute;
-  inset: var(--art-padding);
-  width: calc(100% - var(--art-padding) - var(--art-padding));
-  height: calc(100% - var(--art-padding) - var(--art-padding));
+  top: 50%;
+  left: 50%;
+  width: min(calc(100cqw - 2 * var(--art-padding)), calc((100cqh - 2 * var(--art-padding)) * var(--image-ratio)));
+  height: auto;
+  translate: -50% -50%;
+  border-radius: var(--radius-card);
   object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 4px 6px rgb(0 0 0 / 8%));
@@ -300,6 +307,7 @@ button svg, .search > svg {
 .icon-button svg { width: 20px; height: 20px; }
 .dialog-close:focus-visible { outline-offset: -2px; }
 .dialog-content { min-height: 0; padding: 0 var(--dialog-padding) var(--dialog-padding); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.detail-art { --radius-card: 16px; }
 .detail-art .card-art { aspect-ratio: var(--card-ratio); max-height: calc(var(--dialog-viewport-height, 100dvh) * 0.6); }
 .detail-information { margin-top: 16px; }
 .detail-information h2 { margin: 0; font-size: 22px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }

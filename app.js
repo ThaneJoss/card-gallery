@@ -89,6 +89,13 @@
   };
   const optionIcon = (kind, option) => option.logo ? `<img src="${escapeHTML(option.logo)}" data-option-icon="${kind}" alt="" draggable="false">` : genericIcons[kind];
 
+  document.addEventListener('load', event => {
+    const image = event.target;
+    if (image instanceof HTMLImageElement && image.hasAttribute('data-card-image')) {
+      image.style.setProperty('--image-ratio', image.naturalWidth / image.naturalHeight);
+    }
+  }, true);
+
   document.addEventListener('error', event => {
     const image = event.target;
     if (!(image instanceof HTMLImageElement)) return;
