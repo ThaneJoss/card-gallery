@@ -1,40 +1,83 @@
 # 卡片资料：日常只编辑这个文件，排列顺序就是网页展示顺序。
 # 每张卡以「- 名称:」开头，其余字段前面保留两个空格，不要用 Tab。
-# 类型填写「信用卡」或「储蓄卡」；卡面下载到 assets/cards/，图片填写对应本地路径。
+# 类型填写「信用卡」或「储蓄卡」；图片填写可直接访问的远端图片地址。
 # 卡组织只有一个时直接填写；多个时像下面一样分行列出。
 # 银行图标按银行名称自动匹配，不需要逐张填写。
 # 编号可以省略，由构建自动生成；复制已有卡片时请修改或删除编号。
-# 部署时从本地读取卡面并转换图片，无需再次请求来源网站。
+# PR 的 CI 会自动下载卡面到 assets/cards/，并将图片地址改为本地路径。
+# 来源为 Hibank 的条目来自第三方图鉴：https://hi.zzz.moe/face。
 
 - 名称: 马年生肖卡马到成功版
-  银行: 中国工商银行  
+  银行: 中国工商银行
   类型: 储蓄卡
-  图片: ./assets/cards/icbc-horse-success.jpg
+  # 来源：Hibank，条目 461。
+  图片: https://storage.my-api.cn/static/images/new_upload/155.jpg
   卡组织: 银联
   编号: icbc-horse-success
 
-
 - 名称: 长城电子借记卡
   银行: 中国银行
+  类型: 储蓄卡
+  # 来源：Hibank，条目 13，常规银联长城卡面。
+  图片: https://storage.my-api.cn/static/images/Cards/Bank%20of%20China/%E9%95%BF%E5%9F%8E%E5%80%9F%E8%AE%B0%E5%8D%A1.png
+  卡组织: 银联
+  编号: boc-great-wall-debit
 
 - 名称: 龙卡通
   银行: 中国建设银行
- 
+  类型: 储蓄卡
+  # 来源：Hibank，条目 49，卡面标注「龙卡通（储蓄卡）」。
+  图片: https://storage.my-api.cn/static/images/Cards/China%20Construction%20Bank/%E9%93%B6%E8%81%94%E5%82%A8%E8%93%84%E5%8D%A1.png
+  卡组织: 银联
+  编号: ccb-long-card-debit
+
 - 名称: bilibili信用卡锦绣山河学生版
   银行: 中国建设银行
+  类型: 信用卡
+  # 来源：https://post.smzdm.com/p/ar6530gx/，学生版金卡页面截图。
+  # 远端裁切仅保留卡面，CI 可直接下载。
+  图片: https://wsrv.nl/?url=https%3A%2F%2Fqnam.smzdm.com%2F202109%2F28%2F6152d71ea8a816540.jpg_e1080.jpg&cx=269&cy=75&cw=540&ch=340&output=jpg
+  卡组织: 银联
+  编号: ccb-bilibili-landscape-student
 
-- 名称: 储蓄卡
+- 名称: 金穗社保卡
   银行: 中国农业银行
+  类型: 储蓄卡
+  # BIN 622823：农行公告 https://www.abchina.com/cn/branch/sh/preInfo/fwgg/201201/t20120120_870632.htm。
+  # 采用农行河南分行公布的 622823 卡面作为代表图，不细分地区版本。
+  # 来源：https://www.abchina.com/cn/branch/ha/branchchar/201603/t20160323_861043.htm。
+  图片: https://wsrv.nl/?url=https%3A%2F%2Fwww.abchina.com%2Fcn%2Fbranch%2Fha%2Fbranchchar%2F201603%2FW020160331608424047872.png&cx=13&cy=2&cw=241&ch=157&output=png
+  卡组织: 银联
+  编号: abc-jinsui-social-security
 
-- 名称: （交通银行马年生肖卡,待核实）
+- 名称: 太平洋马年贺岁卡
   银行: 交通银行
+  类型: 储蓄卡
+  # 来源：Hibank，条目 529，对应原清单中的交行马年生肖卡。
+  图片: https://storage.my-api.cn/static/images/new_upload/%E5%A4%AA%E5%B9%B3%E6%B4%8B%E9%A9%AC%E5%B9%B4%E8%B4%BA%E5%B2%81%E5%8D%A1.png
+  卡组织: 银联
+  编号: bocom-horse-new-year
 
-- 名称：（招商银行锦鲤鱼）
+- 名称: 锦鲤主题储蓄卡
   银行: 招商银行
+  类型: 储蓄卡
+  # 来源：https://battlele.com/cmb-credit-card/，锦鲤卡实物照片。
+  图片: https://i.imgur.com/xtICxjy.jpeg
+  卡组织: 银联
+  编号: cmb-koi-debit
 
-- 名称 （金葵花万事达人民币）
-  银行: 招商银行 
-
-- 名称：银联 bilibili联名信用卡校园版
+- 名称: 万事达金葵花借记卡（境外以人民币结算）
   银行: 招商银行
+  类型: 储蓄卡
+  # 来源：Hibank，条目 341，境外以人民币结算版本。
+  图片: https://storage.my-api.cn/static/images/new_upload/1000033402.webp
+  卡组织: Mastercard
+  编号: cmb-sunflower-mastercard-cny
 
+- 名称: 银联bilibili联名信用卡校园版
+  银行: 招商银行
+  类型: 信用卡
+  # 来源：Hibank，条目 95，银联国风卡面；校园版名称沿用原清单。
+  图片: https://storage.my-api.cn/static/images/Cards/China%20Merchants%20Bank/%E6%8B%9B%E5%95%86%E9%93%B6%E8%A1%8C%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9%E4%BF%A1%E7%94%A8%E5%8D%A1.png
+  卡组织: 银联
+  编号: cmb-bilibili-unionpay-campus
