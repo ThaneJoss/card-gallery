@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f6f7f9">
+  <meta name="theme-color" content="#f7f6f2">
   <meta name="description" content="卡间拾光，收藏一方卡面里的万千风景。浏览银行卡设计，按银行、卡片类型与卡组织筛选你喜欢的卡面。">
   <title>卡间拾光 · 银行卡收藏画廊</title>
   <link rel="icon" type="image/svg+xml" href="./assets/card-mark.svg">
@@ -13,23 +13,15 @@
 </head>
 <body>
   <a class="skip-link" href="#gallery">跳转到卡片画廊</a>
-  <header class="site-header">
-    <div class="header-content">
-      <a class="brand" href="./index.html" aria-label="卡间拾光首页">
-        <img class="brand-mark" src="./assets/card-mark.svg" width="36" height="36" alt="">
-        <span>卡间拾光</span>
-      </a>
-    </div>
-  </header>
   <main class="main-content">
-    <div class="page-heading">
+    <header class="page-heading">
       <div>
         <p class="panel-label">银行卡收藏画廊</p>
-        <h1>卡间<span>拾光</span></h1>
-        <p class="page-description">浏览收藏的卡面，按银行、卡片类型或卡组织查找。</p>
+        <h1><a class="brand" href="./index.html" aria-label="卡间拾光首页">卡间拾光</a></h1>
+        <p class="page-description">收集卡面，也留住与它们有关的片刻。</p>
       </div>
       <span class="gallery-hint">点击卡片，查看大图 <span aria-hidden="true">↗</span></span>
-    </div>
+    </header>
     <section class="filters" aria-label="筛选卡片" hidden>
       <form class="search" role="search" id="search-form">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg>
@@ -73,10 +65,18 @@
     </section>
     <noscript><p class="no-script">请开启 JavaScript 以浏览卡片和使用筛选功能。</p></noscript>
   </main>
+  <footer class="site-footer"><p>卡间拾光 · 银行卡收藏画廊</p></footer>
   <dialog id="card-dialog" class="card-dialog" aria-labelledby="detail-title">
-    <button class="icon-button dialog-close" id="close-dialog" type="button" aria-label="关闭卡面详情"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
-    <div id="detail-art" class="detail-art"></div>
-    <div class="detail-information"><h2 id="detail-title"></h2><span id="detail-bank" class="detail-bank"></span><span class="detail-type" id="detail-type"></span></div>
+    <div class="dialog-toolbar">
+      <button class="icon-button dialog-close" id="close-dialog" type="button" aria-label="关闭卡面详情"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+    </div>
+    <div class="dialog-content">
+      <div id="detail-art" class="detail-art"></div>
+      <div class="detail-information">
+        <h2 id="detail-title"></h2>
+        <div class="detail-meta"><span id="detail-bank" class="detail-bank"></span><span class="detail-type" id="detail-type"></span></div>
+      </div>
+    </div>
   </dialog>
 </body>
 </html>

@@ -63,12 +63,15 @@
   const dialog = $('#card-dialog');
   const search = $('#search-input');
   let activePicker = null;
-  const cardRatio = 85.6 / 53.98;
 
   const escapeHTML = (text) => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const cardArt = (card, {lazy = false, priority = false} = {}) => {
     return `<span class="card-art"><img data-card-image src="${escapeHTML(card.image)}" alt="${escapeHTML(`${card.bank} ${card.name}卡面`)}" draggable="false" decoding="async" loading="${lazy ? 'lazy' : 'eager'}" fetchpriority="${priority ? 'high' : 'auto'}"><span class="image-fallback" hidden>卡面暂不可用</span></span>`;
   };
+  const cardTypeAndNetworks = (card) => [
+    card.type === 'debit' ? '储蓄卡' : '信用卡',
+    ...card.networks.map(network => networkOptions.find(option => option.value === network).label)
+  ].join(' · ');
 
   const bankNames = [...new Set(cards.map(card => card.bank))];
   const bankLogos = new Map(Object.entries(window.CARD_GALLERY_BANK_LOGOS));
@@ -85,6 +88,13 @@
     network:[{value:'all',label:'全部卡组织'}, ...networkOptions.map(item => ({...item,logo:`./assets/logos/networks/${item.value}.svg`}))]
   };
   const optionIcon = (kind, option) => option.logo ? `<img src="${escapeHTML(option.logo)}" data-option-icon="${kind}" alt="" draggable="false">` : genericIcons[kind];
+
+  document.addEventListener('load', event => {
+    const image = event.target;
+    if (image instanceof HTMLImageElement && image.hasAttribute('data-card-image')) {
+      image.style.setProperty('--image-ratio', image.naturalWidth / image.naturalHeight);
+    }
+  }, true);
 
   document.addEventListener('error', event => {
     const image = event.target;
@@ -211,7 +221,7 @@
     $('#clear-search').hidden = search.value.length === 0;
     const nextCardIds = JSON.stringify(visibleCards.map(card => card.id));
     if (renderedCardIds !== nextCardIds) {
-      gallery.innerHTML = visibleCards.map((card, index) => `<article class="gallery-card" style="--index:${Math.min(index, 5)}"><button class="card-button" type="button" data-card="${escapeHTML(card.id)}" aria-haspopup="dialog" aria-label="查看${escapeHTML(card.bank)}${escapeHTML(card.name)}卡面">${cardArt(card, {lazy:index >= 3, priority:index === 0})}<span class="card-caption"><span class="card-name">${escapeHTML(card.name)}</span><span class="card-bank">${bankLogo(card.bank)}</span></span></button></article>`).join('');
+      gallery.innerHTML = visibleCards.map((card, index) => `<article class="gallery-card"><button class="card-button" type="button" data-card="${escapeHTML(card.id)}" aria-haspopup="dialog" aria-label="查看${escapeHTML(card.bank)}${escapeHTML(card.name)}卡面">${cardArt(card, {lazy:index >= 3, priority:index === 0})}<span class="card-caption"><span class="card-name">${escapeHTML(card.name)}</span><span class="card-meta">${escapeHTML(`${card.bank} · ${cardTypeAndNetworks(card)}`)}</span></span></button></article>`).join('');
       renderedCardIds = nextCardIds;
     }
     const filtered = state.type !== 'all' || state.bank !== 'all' || state.network !== 'all' || state.query.trim() !== '';
@@ -239,13 +249,14 @@
     if (!card) return;
     $('#detail-art').innerHTML = cardArt(card, {priority:true});
     $('#detail-title').textContent = card.name;
-    $('#detail-bank').innerHTML = bankLogo(card.bank);
-    $('#detail-type').textContent = card.type === 'debit' ? '储蓄卡' : '信用卡';
+    $('#detail-bank').innerHTML = `${bankLogo(card.bank)}<span>${escapeHTML(card.bank)}</span>`;
+    $('#detail-type').textContent = cardTypeAndNetworks(card);
     if (!dialog.open) {
       closePicker();
       lastFocusedCard = document.activeElement;
       dialog.showModal();
       fitDialog();
+      $('.dialog-content').scrollTop = 0;
       $('#close-dialog').focus({preventScroll:true});
     }
   }
@@ -253,24 +264,8 @@
   function fitDialog() {
     if (!dialog.open) return;
     const viewport = window.visualViewport;
-    const availableWidth = (viewport?.width || window.innerWidth) - 32;
-    const availableHeight = (viewport?.height || window.innerHeight) - 32;
-    const style = getComputedStyle(dialog);
-    const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-    const verticalPadding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-    let artWidth = Math.max(1,Math.min(788,availableWidth-horizontalPadding));
-    for (let pass = 0; pass < 5; pass++) {
-      dialog.style.width = `${artWidth + horizontalPadding}px`;
-      const information = $('.detail-information');
-      const infoStyle = getComputedStyle(information);
-      const captionHeight = information.getBoundingClientRect().height + parseFloat(infoStyle.marginTop) + parseFloat(infoStyle.marginBottom);
-      const heightLimit = Math.max(1,availableHeight-verticalPadding-captionHeight-1);
-      const nextWidth = Math.min(artWidth, heightLimit*cardRatio);
-      if (Math.abs(nextWidth-artWidth) < 0.1) break;
-      artWidth = nextWidth;
-    }
-    dialog.style.width = `${artWidth + horizontalPadding}px`;
-    dialog.scrollTop = 0;
+    dialog.style.setProperty('--dialog-viewport-width', `${viewport?.width || window.innerWidth}px`);
+    dialog.style.setProperty('--dialog-viewport-height', `${viewport?.height || window.innerHeight}px`);
   }
   function handleViewportChange() {
     closePicker();
