@@ -7,10 +7,10 @@ import { dirname, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { stringify } from 'yaml';
+import { parse, stringify } from 'yaml';
 import { parseCards } from '../scripts/card-data.mjs';
 import { buildSite } from '../scripts/build.mjs';
-import { localizeCardImages, localizeCardsFile, remoteImageUrl } from '../scripts/localize-card-images.mjs';
+import { localizeCardImages, localizeCardsFile, remoteImageUrl } from '../.github/scripts/localize-card-images.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const card = (id, image) => ({ 编号: id, 名称: '测试卡片', 银行: '测试银行', 类型: '信用卡', 图片: image });
@@ -107,8 +107,50 @@ test('文件名冲突不会覆盖已有卡面，卡片编号不能写到目标�
   assert.equal(parseCards(result.source)[1].id, '../../outside');
 });
 
+test('新增 BIN 和嵌套资料字段不阻止本地化，字段值与注释均保留', async () => {
+  const entry = {
+    ...card('with-metadata', 'https://example.com/card.png'), bin: '012345',
+    收藏资料: { 备注: '主题待确认', 标签: ['纪念卡', '校园版'] }
+  };
+  const source = `# 来源与核实记录\n${stringify([entry])}`.replace('bin: "012345"', 'bin: "012345" # 保留前导零');
+  assert.throws(() => parseCards(source), /未知字段/);
+  const result = await localizeCardImages({
+    source, existingPaths: ['assets/cards/old.png'], fetchImage: async () => new Response(png)
+  });
+  assert.equal(result.changedCards, 1);
+  assert.deepEqual(parse(result.source), [{ ...entry, 图片: './assets/cards/with-metadata.png' }]);
+  assert.match(result.source, /# 来源与核实记录/);
+  assert.match(result.source, /# 保留前导零/);
+  assert.deepEqual(result.deletedImages, ['assets/cards/old.png']);
+});
+
+test('bot 只要求图片和可选编号，展示资料由应用校验器检查', async () => {
+  const source = stringify([{ 图片: 'https://example.com/card.png', bin: 621700 }]);
+  const result = await localizeCardImages({ source, fetchImage: async () => new Response(png) });
+  assert.equal(result.images[0].path, 'assets/cards/card-1.png');
+  assert.deepEqual(parse(result.source), [{ 图片: './assets/cards/card-1.png', bin: 621700 }]);
+  assert.throws(() => parseCards(result.source));
+});
+
+test('YAML、图片和编号错误在任何下载之前报错', async () => {
+  const valid = card('first', 'https://example.com/card.png');
+  const cases = [
+    ['- 图片: [未结束\n', /格式错误/],
+    ['- 图片: one.png\n  图片: two.png\n', /格式错误/],
+    ['图片: local.png\n', /必须是卡片列表/],
+    [stringify([valid, null]), /第 2 张卡片/],
+    [stringify([valid, { 图片: '' }]), /第 2 张卡片.*图片/],
+    [stringify([valid, { 图片: 123 }]), /第 2 张卡片.*图片/],
+    [stringify([valid, { 图片: 'local.png', 编号: 123 }]), /第 2 张卡片.*编号/],
+    [stringify([valid, { 图片: 'local.png', 编号: 'first' }]), /第 2 张卡片.*重复/]
+  ];
+  for (const [source, message] of cases) {
+    await assert.rejects(localizeCardImages({ source, fetchImage() { assert.fail('资料无效时不应下载'); } }), message);
+  }
+});
+
 test('全部是本地路径或空列表时不下载、不重新格式化 YAML', async () => {
-  for (const source of ['# 空收藏\n', stringify([card('local', './assets/cards/local.png')])]) {
+  for (const source of ['# 空收藏\n', stringify([{ ...card('local', './assets/cards/local.png'), bin: 621700, 收藏备注: '已核实' }])]) {
     const result = await localizeCardImages({ source, fetchImage() { assert.fail('本地卡面不应下载'); } });
     assert.equal(result.source, source);
     assert.deepEqual(result.images, []);
