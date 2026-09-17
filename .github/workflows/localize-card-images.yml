@@ -39,6 +39,6 @@ jobs:
         with:
           script: |
             const { pathToFileURL } = require('node:url');
-            const script = pathToFileURL(`${process.env.GITHUB_WORKSPACE}/scripts/localize-pr-cards.mjs`);
+            const script = pathToFileURL(`${process.env.GITHUB_WORKSPACE}/.github/scripts/localize-pr-cards.mjs`);
             const { localizePullRequest } = await import(script.href);
             await localizePullRequest({ github, context, core });

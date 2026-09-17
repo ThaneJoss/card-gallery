@@ -61,7 +61,7 @@
 
 ## PR 卡面 bot
 
-工作流位于 `.github/workflows/localize-card-images.yml`。工作流及其脚本先合入默认分支后，对涉及 `cards.yaml` 或 `assets/cards/` 的 PR，在创建、追加提交、重新打开时自动运行。
+工作流位于 `.github/workflows/localize-card-images.yml`，bot 的下载、清理和 PR 提交脚本统一放在 `.github/scripts/`。工作流及其脚本先合入默认分支后，对涉及 `cards.yaml` 或 `assets/cards/` 的 PR，在创建、追加提交、重新打开时自动运行。
 
 1. 读取 PR 最新版本的 `cards.yaml`，检查每张卡的「图片」。`https://`、`http://`、`//` 开头的网址会下载；`images.example.com/card.jpg` 这样的地址会补上 `https://`。`./assets/cards/card.jpg`、`assets/cards/card.jpg`、`card.jpg` 等本地路径保持不变。
 2. 下载并校验图片，保留原始图片字节，按实际格式命名为 `assets/cards/编号.扩展名`。未填编号时使用 `card-1` 等名称；同名时添加数字后缀，相同网址在一次处理内复用同一个文件。
@@ -111,8 +111,8 @@ cards.yaml 中的中文卡片资料和本地图片路径
 | --- | --- |
 | `cards.yaml` | 手动维护的中文卡片资料及图片路径，也可填写待 bot 下载的网址 |
 | `scripts/card-data.mjs` | 解析并校验卡片资料，生成网页需要的数据 |
-| `scripts/localize-card-images.mjs` | 下载远程卡面、生成本地相对路径并清理未引用图片；也提供本地命令 |
-| `scripts/localize-pr-cards.mjs` | 读取 PR 资料并把图片新增、删除与 YAML 一起提交到来源分支 |
+| `.github/scripts/localize-card-images.mjs` | 下载远程卡面、生成本地相对路径并清理未引用图片；也提供本地命令 |
+| `.github/scripts/localize-pr-cards.mjs` | 读取 PR 资料并把图片新增、删除与 YAML 一起提交到来源分支 |
 | `.github/workflows/localize-card-images.yml` | PR 卡面 bot 的触发事件、依赖安装和写入权限 |
 | `scripts/build.mjs` | 下载、转换图片并生成发布目录 |
 | `package.json`、`pnpm-lock.yaml` | 构建命令、pnpm 版本及依赖版本 |

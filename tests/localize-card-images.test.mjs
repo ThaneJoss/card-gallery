@@ -10,7 +10,7 @@ import sharp from 'sharp';
 import { stringify } from 'yaml';
 import { parseCards } from '../scripts/card-data.mjs';
 import { buildSite } from '../scripts/build.mjs';
-import { localizeCardImages, localizeCardsFile, remoteImageUrl } from '../scripts/localize-card-images.mjs';
+import { localizeCardImages, localizeCardsFile, remoteImageUrl } from '../.github/scripts/localize-card-images.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const card = (id, image) => ({ 编号: id, 名称: '测试卡片', 银行: '测试银行', 类型: '信用卡', 图片: image });

@@ -3,9 +3,9 @@ import { dirname, posix, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { parseDocument } from 'yaml';
-import { parseCards } from './card-data.mjs';
+import { parseCards } from '../../scripts/card-data.mjs';
 
-const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 export function remoteImageUrl(value) {
   let source = value.trim();

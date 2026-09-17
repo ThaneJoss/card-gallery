@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import sharp from 'sharp';
 import { stringify } from 'yaml';
 import { parseCards } from '../scripts/card-data.mjs';
-import { localizePullRequest } from '../scripts/localize-pr-cards.mjs';
+import { localizePullRequest } from '../.github/scripts/localize-pr-cards.mjs';
 
 const png = await sharp({ create: { width: 32, height: 20, channels: 3, background: '#2288cc' } }).png().toBuffer();
 const context = { repo: { owner: 'owner', repo: 'cards' }, payload: { pull_request: { number: 123 } } };
