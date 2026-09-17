@@ -81,7 +81,7 @@ test('省略协议的地址实际按 HTTPS 下载，本地路径不请求网络'
 test('跟随重定向、按实际格式保存原图、复用相同网址并保留注释及卡片资料', async t => {
   const { url, requests } = await imageServer(t);
   const source = `# 收藏说明\n${stringify([
-    card('first', `${url}/redirect`), card('second', `${url}/redirect`), card('local', './assets/cards/old.webp')
+    { ...card('first', `${url}/redirect`), bin: 621700 }, card('second', `${url}/redirect`), card('local', './assets/cards/old.webp')
   ])}`.replace(`图片: ${url}/redirect`, `图片: '${url}/redirect' # 保留来源说明`);
   const result = await localizeCardImages({ source });
   assert.equal(result.changedCards, 2);
@@ -91,6 +91,8 @@ test('跟随重定向、按实际格式保存原图、复用相同网址并保�
   assert.deepEqual(requests, ['/redirect', '/card.jpg?size=large']);
   assert.match(result.source, /# 收藏说明/);
   assert.match(result.source, /# 保留来源说明/);
+  assert.match(result.source, /bin: 621700/);
+  assert.equal(parseCards(result.source)[0].bin, '621700');
   assert.deepEqual(parseCards(result.source), parseCards(source).map((item, index) => ({
     ...item, image: index < 2 ? './assets/cards/first.png' : item.image
   })));

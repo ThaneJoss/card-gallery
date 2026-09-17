@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 
-const fields = new Set(['名称', '银行', '类型', '图片', '卡组织', '编号']);
+const fields = new Set(['名称', '银行', '类型', '图片', '卡组织', '编号', 'bin']);
 const types = new Map([['信用卡', 'credit'], ['储蓄卡', 'debit']]);
 const networks = new Map([
   ['visa', 'visa'], ['mastercard', 'mastercard'], ['万事达', 'mastercard'],
@@ -51,6 +51,13 @@ export function parseCards(source) {
     ids.add(id);
     const type = types.get(text('类型'));
     if (!type) throw new Error(`${label}的「类型」请填写「信用卡」或「储蓄卡」。`);
+    let bin;
+    if (Object.hasOwn(entry, 'bin')) {
+      if (!['string', 'number'].includes(typeof entry.bin) || !/^\d{6}(?:\d{2})?$/.test(String(entry.bin).trim())) {
+        throw new Error(`${label}的「bin」须为 6 位或 8 位数字，可填写数字或文本。`);
+      }
+      bin = String(entry.bin).trim();
+    }
     const cardNetworks = list('卡组织').map(name => {
       const network = networks.get(name.toLowerCase());
       if (!network) throw new Error(`${label}的卡组织「${name}」无效，可填写 Visa、Mastercard、银联、Amex、JCB 或 Discover。`);
@@ -59,7 +66,8 @@ export function parseCards(source) {
     return {
       id, name: text('名称'), bank: text('银行'), type,
       networks: [...new Set(cardNetworks)],
-      image: text('图片')
+      image: text('图片'),
+      ...(bin ? { bin } : {})
     };
   });
 }

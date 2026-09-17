@@ -47,6 +47,24 @@ test('只需填写四个必填字段，清空文件可以清空收藏', () => {
   assert.deepEqual(parseCards('# 暂时没有卡片\n'), []);
 });
 
+test('可选 BIN 接受六位和八位数字或文本，统一保留为文本', () => {
+  for (const bin of [621700, '621700', 53106300, '53106300', '012345']) {
+    const [card] = parseCards(stringify([{ ...minimalCard, bin }]));
+    assert.equal(card.bin, String(bin));
+  }
+  assert.equal(Object.hasOwn(parseCards(stringify([minimalCard]))[0], 'bin'), false);
+});
+
+test('BIN 长度和内容错误能定位到具体卡片', () => {
+  for (const bin of [62170, 6217000, '621700000', '62170A', '', null, true, [621700]]) {
+    assert.throws(() => parseCards(stringify([minimalCard, { ...minimalCard, bin }])), error => {
+      assert.match(error.message, /第 2 张卡片/);
+      assert.match(error.message, /「bin」须为 6 位或 8 位数字/);
+      return true;
+    });
+  }
+});
+
 test('YAML 语法和重复字段错误包含文件名及出错位置', () => {
   for (const source of ['- 名称: 我的卡\n  银行: [中国银行\n', '- 名称: 第一张\n  名称: 第二张\n']) {
     assert.throws(() => parseCards(source), error => {
