@@ -64,12 +64,14 @@
 
 工作流位于 `.github/workflows/localize-card-images.yml`。工作流及其脚本先合入默认分支后，对涉及 `cards.yaml` 或 `assets/cards/` 的 PR，在创建、追加提交、重新打开时自动运行。
 
-1. 读取 PR 最新版本的 `cards.yaml`，检查每张卡的「图片」。`https://`、`http://`、`//` 开头的网址会下载；`images.example.com/card.jpg` 这样的地址会补上 `https://`。`./assets/cards/card.jpg`、`assets/cards/card.jpg`、`card.jpg` 等本地路径保持不变。
+1. 读取 PR 最新版本的 `cards.yaml`，检查列表结构、每张卡的「图片」和可选「编号」，原样保留其他资料字段。`https://`、`http://`、`//` 开头的网址会下载；`images.example.com/card.jpg` 这样的地址会补上 `https://`。`./assets/cards/card.jpg`、`assets/cards/card.jpg`、`card.jpg` 等本地路径保持不变。
 2. 下载并校验图片，保留原始图片字节，按实际格式命名为 `assets/cards/编号.扩展名`。未填编号时使用 `card-1` 等名称；同名时添加数字后缀，相同网址在一次处理内复用同一个文件。
 3. 将「图片」改为 `./assets/cards/...`，保留 YAML 中的注释及其他字段，再按更新后的资料清理 `assets/cards/` 中未引用的图片。支持 PNG、JPEG、WebP、GIF、AVIF、SVG 等图片扩展名；非图片文件、目录、符号链接和该目录之外的资源保留。
 4. 把图片新增、删除和 YAML 修改一起提交到 PR 来源分支，提交信息为「自动本地化卡面并清理未引用图片」。
 
-即使全部是本地路径，只要存在未引用图片，也会追加清理提交；路径和图片都无需整理时不产生新提交。空卡片列表会清理全部未引用卡面。任一下载、资料或图片校验失败时，不删除图片，工作流报错且不追加提交。下载期间若 PR 出现新提交，不会覆盖新改动；新提交会触发下一次处理。
+即使全部是本地路径，只要存在未引用图片，也会追加清理提交；路径和图片都无需整理时不产生新提交。空卡片列表会清理全部未引用卡面。YAML、图片路径、编号或下载图片校验失败时，不删除图片，工作流报错且不追加提交。下载期间若 PR 出现新提交，不会覆盖新改动；新提交会触发下一次处理。
+
+bot 的图片整理逻辑独立于应用资料校验器，PR 新增 `bin` 等字段时仍可处理图片并保留新增资料。名称、银行、类型、卡组织及应用支持的字段由 `pnpm check:cards` 和 `pnpm build` 校验；图片整理成功不代表全部资料通过应用校验。bot 脚本统一放在 `.github/scripts/`。
 
 当前自动回写支持**本仓库分支的 PR**，使用内置 `GITHUB_TOKEN`，无需配置额外 secret。Fork PR 会在 Actions 中提示无法回写，贡献者可在来源分支运行 `pnpm localize:cards`，提交 `cards.yaml` 与 `assets/cards/` 的新增、删除后更新 PR。
 
@@ -112,8 +114,8 @@ cards.yaml 中的中文卡片资料和本地图片路径
 | --- | --- |
 | `cards.yaml` | 手动维护的中文卡片资料及图片路径，也可填写待 bot 下载的网址 |
 | `scripts/card-data.mjs` | 解析并校验卡片资料，生成网页需要的数据 |
-| `scripts/localize-card-images.mjs` | 下载远程卡面、生成本地相对路径并清理未引用图片；也提供本地命令 |
-| `scripts/localize-pr-cards.mjs` | 读取 PR 资料并把图片新增、删除与 YAML 一起提交到来源分支 |
+| `.github/scripts/localize-card-images.mjs` | 下载远程卡面、生成本地相对路径并清理未引用图片；也提供本地命令 |
+| `.github/scripts/localize-pr-cards.mjs` | 读取 PR 资料并把图片新增、删除与 YAML 一起提交到来源分支 |
 | `.github/workflows/localize-card-images.yml` | PR 卡面 bot 的触发事件、依赖安装和写入权限 |
 | `scripts/build.mjs` | 下载、转换图片并生成发布目录 |
 | `package.json`、`pnpm-lock.yaml` | 构建命令、pnpm 版本及依赖版本 |

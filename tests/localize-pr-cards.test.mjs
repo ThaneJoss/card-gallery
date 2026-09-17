@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import sharp from 'sharp';
-import { stringify } from 'yaml';
+import { parse, stringify } from 'yaml';
 import { parseCards } from '../scripts/card-data.mjs';
-import { localizePullRequest } from '../scripts/localize-pr-cards.mjs';
+import { localizePullRequest } from '../.github/scripts/localize-pr-cards.mjs';
 
 const png = await sharp({ create: { width: 32, height: 20, channels: 3, background: '#2288cc' } }).png().toBuffer();
 const context = { repo: { owner: 'owner', repo: 'cards' }, payload: { pull_request: { number: 123 } } };
@@ -61,7 +61,7 @@ test('一个提交原子包含 YAML、图片新增和旧图删除，并限定预
 
 test('全部已本地化且无闲置图片时不追加空提交，Fork 或已关闭 PR 不进行下载和写入', async () => {
   for (const options of [
-    { source: stringify([{ ...entry, 图片: './assets/cards/card-1.png' }]) },
+    { source: stringify([{ ...entry, 图片: './assets/cards/card-1.png', bin: 621700 }]) },
     { pr: { state: 'closed', head } },
     { pr: { state: 'open', head: { ...head, repo: { full_name: 'contributor/cards' } } } }
   ]) {
@@ -70,6 +70,20 @@ test('全部已本地化且无闲置图片时不追加空提交，Fork 或已关
     await localizePullRequest(args);
     assert.deepEqual(commits, []);
   }
+});
+
+test('PR 新增资料字段时仍可原子提交卡面，并保留 BIN 和备注', async () => {
+  const extendedEntry = { ...entry, bin: 621700, 核实备注: { 主题: '待确认' } };
+  const { args, commits } = fixture({ source: stringify([extendedEntry]) });
+  await localizePullRequest(args);
+  assert.equal(commits.length, 1);
+  const commit = commits[0];
+  assert.equal(commit.expectedHeadOid, head.sha);
+  const yaml = commit.fileChanges.additions.find(file => file.path === 'cards.yaml');
+  assert.deepEqual(parse(Buffer.from(yaml.contents, 'base64').toString('utf8')), [
+    { ...extendedEntry, 图片: './assets/cards/card-1-2.png' }
+  ]);
+  assert.deepEqual(commit.fileChanges.deletions, [{ path: 'assets/cards/card-1.png' }]);
 });
 
 test('没有远程 URL 时也提交未引用图片的删除，且不重写 YAML', async () => {
