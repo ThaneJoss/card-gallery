@@ -8,7 +8,7 @@
 # 来源为 Hibank 的条目来自第三方图鉴：https://hi.zzz.moe/face。
 # bin 为卡号前 6 位或 8 位；相同 BIN 可能对应不同卡面或版本。
 # 2026-09-17 已复核基础信息；具体卡面与版本的证据边界见各条注释。
-# 完整来源与待确认项：docs/card-bin-verification.md。
+# 既有 9 张卡的核实记录：docs/card-bin-verification.md；新增卡片来源见各条注释。
 
 
 - 名称: 马年生肖卡马到成功版
@@ -119,3 +119,77 @@
   # BIN 核对：Hibank 条目 95 明确列出 622575 / 哔哩哔哩信用卡 / 银联，但未区分校园版。
   # 校园版沿用原清单，须以持卡记录确认；不能仅凭 BIN 或国风卡面判断。
   bin: 622575
+
+- 名称: 寰宇人生借记卡
+  银行: 兴业银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 54。
+  # 原图：https://storage.my-api.cn/static/images/Cards/China%20Industrial%20Bank/%E5%AF%B0%E5%AE%87%E4%BA%BA%E7%94%9F.png
+  图片: ./assets/cards/cib-huanyu-life-debit.png
+  卡组织: 银联
+  编号: cib-huanyu-life-debit
+  # BIN 核对：兴业银行 / 银联 / 借记卡，https://bincheck.io/zh/details/622908。
+  # 用户确认寰宇人生版本；Hibank 条目 54 未列 BIN，不将此号段视为该主题专属。
+  # 官方产品介绍：https://www.cib.com.cn/cn/personal/debit/index.html。
+  bin: 622908
+
+- 名称: 美国运通标准借记卡
+  银行: 兴业银行
+  类型: 储蓄卡
+  # 来源：https://finvoke.0xv9.com/posts/china-issued-amex-card/（第三方资料）。
+  # 原图：https://pic.0xv9.com/18be7113651b3699642cc9cdd226feff.jpg
+  图片: ./assets/cards/cib-amex-standard-debit.jpg
+  卡组织: Amex
+  编号: cib-amex-standard-debit
+  # BIN 核对：https://db.encmasuta.com/debit-cards/amex-cn/cib-amex-cn/。
+  # 用户确认标准版；370508 也覆盖安愉及连连联名版本，不仅凭六位 BIN 区分卡面。
+  # 官方产品介绍：https://www.cib.com.cn/cn/aboutCIB/about/news/2021/20210916.html。
+  bin: 370508
+
+- 名称: 马年生肖借记卡
+  银行: 中信银行
+  类型: 储蓄卡
+  # 用户确认马年主题；尚未找到可核实的对应原图，以下为明确标注的占位图，并非真实卡面。
+  图片: ./assets/cards/citic-horse-year-debit-placeholder.svg
+  卡组织: 银联
+  编号: citic-horse-year-debit
+  # BIN 核对：中信银行 / 银联 / 借记卡，https://bincheck.io/zh/details/621771。
+  # 马年主题来自用户补充，无法仅凭 BIN 确认卡面设计或更细的版本名称。
+  bin: 621771
+
+- 名称: Visa外币借记卡（白金卡）
+  银行: 中信银行
+  类型: 储蓄卡
+  # 来源：https://www.flyert.com.cn/forum.php?mod=viewthread&tid=4381679（第三方资料），中信 VISA 白金卡标准版。
+  # 原图：https://ptfg.flyertrip.com/forum/202305/09/222554cnr8hkhgn7m8btrr.jpg!m
+  图片: ./assets/cards/citic-visa-platinum-debit.jpg
+  卡组织: Visa
+  编号: citic-visa-platinum-debit
+  # BIN 核对：https://db.encmasuta.com/debit-cards/visa/citic-visa/，与上方飞客卡面表交叉核对。
+  # 用户确认标准版；438576 同时用于世界杯主题版，不能只凭 BIN 区分卡面。
+  bin: 438576
+
+- 名称: 万事达人民币美元双币借记卡（金卡）
+  银行: 中信银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 532，金卡版本。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/IMG_2603-20260604151920-694664ed.png
+  图片: ./assets/cards/citic-mastercard-gold-debit.png
+  卡组织: Mastercard
+  编号: citic-mastercard-gold-debit
+  # BIN 核对：中信银行 / Mastercard / 借记金卡，https://bincheck.io/details/522401。
+  # Hibank 条目 532 未列 BIN；金卡及貔貅卡面对应参考以下第三方资料：
+  # https://db.encmasuta.com/debit-cards/mastercard-nucc/citic-mastercard-nucc/。
+  bin: 522401
+
+- 名称: 美国运通人民币金卡借记卡
+  银行: 中信银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 42，明确列出 BIN 377138。
+  # 原图：https://storage.my-api.cn/static/images/Cards/China%20Citic%20Bank/%E7%BE%8E%E5%9B%BD%E8%BF%90%E9%80%9A%E9%87%91%E5%8D%A1%E5%80%9F%E8%AE%B0%E5%8D%A1.png
+  图片: ./assets/cards/citic-amex-gold-debit.png
+  卡组织: Amex
+  编号: citic-amex-gold-debit
+  # BIN 交叉核对：https://db.encmasuta.com/debit-cards/amex-cn/citic-amex-cn/。
+  # 第三方资料均对应中信借记金卡，未采用部分境外旧 BIN 库的泰国信用卡分类。
+  bin: 377138
