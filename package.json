@@ -2,7 +2,7 @@
   "name": "card-gallery",
   "private": true,
   "version": "1.0.0",
-  "packageManager": "pnpm@11.25.0",
+  "packageManager": "pnpm@12.4.2",
   "scripts": {
     "check:cards": "node scripts/card-data.mjs",
     "localize:cards": "node scripts/localize-card-images.mjs",
