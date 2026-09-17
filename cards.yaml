@@ -6,6 +6,10 @@
 # 编号可以省略，由构建自动生成；复制已有卡片时请修改或删除编号。
 # PR 的 CI 会自动下载卡面到 assets/cards/，并将图片地址改为本地路径。
 # 来源为 Hibank 的条目来自第三方图鉴：https://hi.zzz.moe/face。
+# bin 为卡号前 6 位或 8 位；相同 BIN 可能对应不同卡面或版本。
+# 2026-09-17 已复核基础信息；具体卡面与版本的证据边界见各条注释。
+# 完整来源与待确认项：docs/card-bin-verification.md。
+
 
 - 名称: 马年生肖卡马到成功版
   银行: 中国工商银行
@@ -14,6 +18,9 @@
   图片: ./assets/cards/icbc-horse-success-2.jpg
   卡组织: 银联
   编号: icbc-horse-success
+  # BIN 核对：工行 / 银联 / 借记卡，https://bincheck.io/zh/details/621225。
+  # Hibank 条目 461 未列 BIN；保留原主题，621225 与该马年卡面的对应仍待确认。
+  bin: 621225
 
 - 名称: 长城电子借记卡
   银行: 中国银行
@@ -22,6 +29,10 @@
   图片: ./assets/cards/boc-great-wall-debit.png
   卡组织: 银联
   编号: boc-great-wall-debit
+  # BIN 核对：中行 / 银联 / 借记卡，https://bincheck.io/details/621663。
+  # 第三方 BIN 库另称「员工普卡」，未找到中行官方对应表；保留系列名，不据此改成员工卡。
+  # https://tool.zao3g.com/cardbin/bin_621663.html；Hibank 条目 13 未列 BIN，常规卡面仅作示意。
+  bin: 621663
 
 - 名称: 龙卡通
   银行: 中国建设银行
@@ -30,6 +41,9 @@
   图片: ./assets/cards/ccb-long-card-debit.png
   卡组织: 银联
   编号: ccb-long-card-debit
+  # BIN 核对：建行 / 银联 / 借记卡；Hibank 条目 49 明确列出 621700。
+  # 龙卡通为官方借记卡产品：https://www.ccb.com/chn/home/yhk/yhklb/lkjjk/lkt/lkt/index.shtml。
+  bin: 621700
 
 - 名称: bilibili信用卡锦绣山河学生版
   银行: 中国建设银行
@@ -39,6 +53,11 @@
   图片: ./assets/cards/ccb-bilibili-landscape-student.jpg
   卡组织: 银联
   编号: ccb-bilibili-landscape-student
+  # BIN 核对：建行银联信用卡；此 BIN 也用于其他龙卡产品，不能单独确认主题或学生版。
+  # 官方 BIN 依据：https://www1.ccb.com/sn/cn/faverable/20160837_1425457621.html。
+  # 锦绣山河学生版沿用上方截图来源；并非依据 BIN 唯一识别。
+  bin: 622168
+
 
 - 名称: 金穗社保卡
   银行: 中国农业银行
@@ -49,6 +68,8 @@
   图片: ./assets/cards/abc-jinsui-social-security.png
   卡组织: 银联
   编号: abc-jinsui-social-security
+  # 上述农行官方公告直接列明「金穗社保卡 / 借记卡 / 622823」；BIN 不区分地区卡面。
+  bin: 622823
 
 - 名称: 太平洋马年贺岁卡
   银行: 交通银行
@@ -57,6 +78,9 @@
   图片: ./assets/cards/bocom-horse-new-year.png
   卡组织: 银联
   编号: bocom-horse-new-year
+  # BIN 核对：交行 / 银联 / 借记卡，https://bincheck.io/details/622262。
+  # Hibank 条目 529 明确关联 622262 与当前马年卡面；属第三方证据，该 BIN 并非主题专属。
+  bin: 622262
 
 - 名称: 锦鲤主题储蓄卡
   银行: 招商银行
@@ -65,6 +89,13 @@
   图片: ./assets/cards/cmb-koi-debit.jpg
   卡组织: 银联
   编号: cmb-koi-debit
+  # BIN 核对：招行银联 IC 普卡借记卡，https://www.chakahao.com/cardbin/html/621483.html。
+  # 锦鲤主题不能由 BIN 确认；原图片来源文章本次访问为 404，保留原名称与图片，主题对应待确认。
+  bin: 621483
+
+
+
+
 
 - 名称: 万事达金葵花借记卡（境外以人民币结算）
   银行: 招商银行
@@ -73,6 +104,10 @@
   图片: ./assets/cards/cmb-sunflower-mastercard-cny.webp
   卡组织: Mastercard
   编号: cmb-sunflower-mastercard-cny
+  # BIN 核对：Hibank 条目 341 明确列 531063 为人民币结算版，美元结算版条目 340 为 525612。
+  # https://hi.my-api.cn/api/?resource=face&search=%E9%87%91%E8%91%B5%E8%8A%B1
+  # 金葵花及结算版本有第三方资料支持，未找到银行官网直接列明 BIN 与结算版本的对照。
+  bin: 531063
 
 - 名称: 银联bilibili联名信用卡校园版
   银行: 招商银行
@@ -81,3 +116,6 @@
   图片: ./assets/cards/cmb-bilibili-unionpay-campus.jpg
   卡组织: 银联
   编号: cmb-bilibili-unionpay-campus
+  # BIN 核对：Hibank 条目 95 明确列出 622575 / 哔哩哔哩信用卡 / 银联，但未区分校园版。
+  # 校园版沿用原清单，须以持卡记录确认；不能仅凭 BIN 或国风卡面判断。
+  bin: 622575
