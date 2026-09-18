@@ -252,7 +252,7 @@
         const extra = other.length ? `<div class="other-networks"><h4>其他卡组织</h4><div class="bank-card-row">${other.map(renderCard).join('')}</div></div>` : '';
         return `<div class="bank-card-type" data-card-type="${type}"><h3>${type === 'debit' ? '储蓄卡' : '信用卡'}</h3>${rows}${extra}</div>`;
       };
-      gallery.innerHTML = [...groups].map(([bank, entries]) => `<section class="bank-group" data-tone="${bankRanks.get(bank) % 3}" aria-labelledby="bank-heading-${bankRanks.get(bank)}"><h2 class="bank-heading" id="bank-heading-${bankRanks.get(bank)}"><span aria-hidden="true">${bankLogo(bank)}</span>${escapeHTML(bank)}</h2><div class="network-headings" aria-hidden="true"><span>银联 UnionPay</span><span>Visa</span><span>Mastercard</span><span>AMEX</span></div><div class="bank-cards">${renderType(entries, 'debit')}${renderType(entries, 'credit')}</div></section>`).join('');
+      gallery.innerHTML = '<div class="network-headings" aria-hidden="true"><span>银联 UnionPay</span><span>Visa</span><span>Mastercard</span><span>AMEX</span></div>' + [...groups].map(([bank, entries]) => `<section class="bank-group" data-tone="${bankRanks.get(bank) % 3}" aria-labelledby="bank-heading-${bankRanks.get(bank)}"><h2 class="bank-heading" id="bank-heading-${bankRanks.get(bank)}"><span aria-hidden="true">${bankLogo(bank)}</span>${escapeHTML(bank)}</h2><div class="bank-cards">${renderType(entries, 'debit')}${renderType(entries, 'credit')}</div></section>`).join('');
       renderedCardIds = nextCardIds;
     }
     const filtered = state.type !== 'all' || state.bank !== 'all' || state.network !== 'all' || state.query.trim() !== '';
