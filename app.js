@@ -232,9 +232,27 @@
       const groups = new Map();
       visibleCards.forEach((card, index) => {
         if (!groups.has(card.bank)) groups.set(card.bank, []);
-        groups.get(card.bank).push(`<article class="gallery-card"><button class="card-button" type="button" data-card="${escapeHTML(card.id)}" aria-haspopup="dialog" aria-label="查看${escapeHTML(card.bank)}${escapeHTML(card.name)}卡面">${cardArt(card, {lazy:index >= 4, priority:index === 0})}<span class="card-caption"><span class="card-name">${escapeHTML(card.name)}</span><span class="card-meta">${escapeHTML(`${card.bank} · ${cardTypeAndNetworks(card)}`)}</span></span></button></article>`);
+        groups.get(card.bank).push({card, index});
       });
-      gallery.innerHTML = [...groups].map(([bank, entries]) => `<section class="bank-group" aria-labelledby="bank-heading-${bankRanks.get(bank)}"><h2 class="bank-heading" id="bank-heading-${bankRanks.get(bank)}"><span aria-hidden="true">${bankLogo(bank)}</span>${escapeHTML(bank)}</h2><div class="bank-cards">${entries.join('')}</div></section>`).join('');
+      const renderCard = ({card, index}) => `<article class="gallery-card"><button class="card-button" type="button" data-card="${escapeHTML(card.id)}" aria-haspopup="dialog" aria-label="查看${escapeHTML(card.bank)}${escapeHTML(card.name)}卡面">${cardArt(card, {lazy:index >= 4, priority:index === 0})}<span class="card-caption"><span class="card-name">${escapeHTML(card.name)}</span><span class="card-meta">${escapeHTML(`${card.bank} · ${cardTypeAndNetworks(card)}`)}</span></span></button></article>`;
+      const renderType = (entries, type) => {
+        const matching = entries.filter(({card}) => card.type === type);
+        if (!matching.length) return '';
+        const columns = Array.from({length:4}, () => []);
+        const other = [];
+        matching.forEach(entry => {
+          const rank = networkRank(entry.card.networks);
+          (rank < 4 ? columns[rank] : other).push(entry);
+        });
+        const rows = Array.from({length:Math.max(...columns.map(column => column.length))}, (_, row) =>
+          `<div class="bank-card-row">${columns.map(column => column[row]
+            ? renderCard(column[row])
+            : '<div class="card-placeholder" aria-hidden="true"></div>').join('')}</div>`).join('');
+        // 其他卡组织单独展示，不占用四个固定卡组织列。
+        const extra = other.length ? `<div class="other-networks"><h4>其他卡组织</h4><div class="bank-card-row">${other.map(renderCard).join('')}</div></div>` : '';
+        return `<div class="bank-card-type" data-card-type="${type}"><h3>${type === 'debit' ? '储蓄卡' : '信用卡'}</h3>${rows}${extra}</div>`;
+      };
+      gallery.innerHTML = [...groups].map(([bank, entries]) => `<section class="bank-group" data-tone="${bankRanks.get(bank) % 3}" aria-labelledby="bank-heading-${bankRanks.get(bank)}"><h2 class="bank-heading" id="bank-heading-${bankRanks.get(bank)}"><span aria-hidden="true">${bankLogo(bank)}</span>${escapeHTML(bank)}</h2><div class="network-headings" aria-hidden="true"><span>银联 UnionPay</span><span>Visa</span><span>Mastercard</span><span>AMEX</span></div><div class="bank-cards">${renderType(entries, 'debit')}${renderType(entries, 'credit')}</div></section>`).join('');
       renderedCardIds = nextCardIds;
     }
     const filtered = state.type !== 'all' || state.bank !== 'all' || state.network !== 'all' || state.query.trim() !== '';
