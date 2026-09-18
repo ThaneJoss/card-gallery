@@ -13,7 +13,7 @@
   --soft: #eff4ff;
   --shadow-panel: 0 1px 3px rgb(16 24 40 / 4%);
   --font-body: Inter, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --content-max: 1160px;
+  --content-max: 1480px;
   --gutter: 48px;
   --radius-control: 8px;
   --radius-stage: 16px;
@@ -243,7 +243,10 @@ button svg, .search > svg {
 .text-button span { font-size: 18px; }
 
 /* 4:3 的展台承托原比例卡面，条目外层保持开放。 */
-.gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 32px; scroll-margin-top: 24px; }
+.gallery { display: grid; gap: 40px; scroll-margin-top: 24px; }
+.bank-group { min-width: 0; }
+.bank-heading { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; font-size: 18px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.bank-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
 .gallery-card { min-width: 0; }
 .card-button { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius-stage); background: transparent; text-align: left; }
 .card-art {
@@ -337,11 +340,15 @@ body:has(.card-dialog[open]) { overflow: hidden; }
   .primary-button:hover { border-color: var(--brand-strong); background: var(--brand-strong); }
   .text-button:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .bank-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @media (min-width: 600px) and (max-width: 1023px) {
   :root { --gutter: 32px; }
   .search { flex-basis: 100%; }
   .filter-controls { width: 100%; }
-  .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 24px; }
+  .gallery { gap: 36px; }
+  .bank-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 24px; }
 }
 @media (max-width: 1023px) { .gallery-hint { display: none; } }
 @media (max-width: 767px) { .type-filters { flex-basis: 100%; } }
@@ -356,7 +363,8 @@ body:has(.card-dialog[open]) { overflow: hidden; }
   .search-shortcut { display: none; }
   .filter-controls, .type-filters { width: 100%; }
   .type-button { flex: 1; }
-  .gallery { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .gallery { gap: 32px; }
+  .bank-cards { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .card-art { --art-padding: 20px; }
   .card-name { font-size: 16px; }
   .site-footer { margin-top: 48px; }
