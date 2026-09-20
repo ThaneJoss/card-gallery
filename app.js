@@ -1,3 +1,6 @@
+import { createCardTextureMapping } from './src/card-texture.mjs';
+import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
+
 (() => {
   'use strict';
 
@@ -40,10 +43,13 @@
       if (!Array.isArray(networks) || ![...networks].every(network => supportedNetworks.has(network))) throw new Error(`${label}的 networks 须为卡组织数组：${[...supportedNetworks].join('、')}。`);
       const textureCorners = item.textureCorners;
       if (textureCorners !== undefined && (!Array.isArray(textureCorners) || textureCorners.length !== 4 || !textureCorners.every(point => Array.isArray(point) && point.length === 2 && point.every(value => Number.isFinite(value) && value >= 0 && value <= 1)))) throw new Error(`${label}的 textureCorners 须为四个归一化坐标。`);
+      const { imageWidth, imageHeight } = item;
+      const { portrait } = createCardTextureMapping({ width: imageWidth, height: imageHeight, textureCorners });
       return {
         id, name: text('name'), bank: text('bank'), type,
         networks: [...new Set(networks)],
         image: imagePath('image'),
+        imageWidth, imageHeight, portrait,
         ...(textureCorners ? { textureCorners } : {})
       };
     });
@@ -70,6 +76,9 @@
   let viewerRequest = 0;
   let viewerBundle = null;
   let selectedFinish = 'matte';
+  let activeCard = null, viewerReady = false, interacting = false, drag = null;
+  let pendingRotations = [];
+  const detailVisual = $('#detail-visual');
   const viewerStage = $('#detail-viewer');
   const viewerControls = $('#detail-viewer-controls');
   const viewerStatus = $('#detail-viewer-status');
@@ -93,6 +102,12 @@
 
   function clearViewer() {
     viewerRequest += 1;
+    viewerReady = false;
+    interacting = false;
+    pendingRotations = [];
+    if (drag && viewerStage.hasPointerCapture(drag.id)) viewerStage.releasePointerCapture(drag.id);
+    drag = null;
+    detailVisual.classList.remove('is-interactive');
     cardViewer?.clearCard();
     viewerStage.hidden = true;
     viewerStage.setAttribute('aria-busy', 'false');
@@ -112,35 +127,93 @@
       if (request !== viewerRequest || !dialog.open) return;
       const applied = await viewer.setCard({ image: card.image, name: `${card.bank} ${card.name}`, textureCorners: card.textureCorners });
       if (!applied || request !== viewerRequest || !dialog.open) return;
-      $('#detail-art').hidden = true;
+      viewerReady = true;
+      if (pendingRotations.length) viewer.rotate(pendingRotations);
+      pendingRotations = [];
+      detailVisual.classList.toggle('is-interactive', interacting);
       viewerStage.setAttribute('aria-busy', 'false');
       viewerStatus.hidden = true;
       viewerControls.hidden = false;
+      viewerControls.querySelectorAll('button').forEach(button => { button.disabled = false; });
       viewerControls.querySelectorAll('[data-finish]').forEach(button => {
         button.setAttribute('aria-pressed', String(button.dataset.finish === selectedFinish));
       });
     } catch {
       if (request !== viewerRequest || !dialog.open) return;
       cardViewer?.clearCard();
-      viewerStage.hidden = true;
       viewerStage.setAttribute('aria-busy', 'false');
-      $('#detail-visual').classList.remove('has-viewer');
-      viewerStatus.textContent = '暂时无法显示立体效果，已显示原图。';
+      viewerControls.querySelectorAll('button').forEach(button => { button.disabled = true; });
+      viewerStatus.textContent = '暂时无法显示立体效果，已保留大图。';
       viewerStatus.hidden = false;
     }
   }
 
+  function layoutPoster() {
+    if (!activeCard || !dialog.open) return;
+    const frame = fitCardFace(viewerStage.clientWidth, viewerStage.clientHeight, activeCard.portrait);
+    const poster = $('#detail-art .detail-poster');
+    Object.assign(poster.style, { left: `${frame.left}px`, top: `${frame.top}px`, width: `${frame.width}px`, height: `${frame.height}px`, borderRadius: `${frame.radius}px` });
+    poster.querySelector('img').style.transform = posterTransform(frame.width, frame.height, activeCard.textureCorners);
+  }
+  new ResizeObserver(layoutPoster).observe(viewerStage);
+
+  function activateViewer() {
+    interacting = true;
+    if (viewerReady) {
+      cardViewer.rotate([]);
+      detailVisual.classList.add('is-interactive');
+    }
+  }
+  function rotateViewer(x, y, angle) {
+    if (!interacting) activateViewer();
+    const rotation = { x, y, angle };
+    if (viewerReady) cardViewer.rotate([rotation]);
+    else pendingRotations.push(rotation);
+  }
+  function resetViewer() {
+    interacting = false;
+    pendingRotations = [];
+    cardViewer?.resetView();
+    detailVisual.classList.remove('is-interactive');
+  }
+  viewerStage.addEventListener('pointerdown', event => {
+    if (drag || event.button !== 0) return;
+    viewerStage.focus({ preventScroll: true });
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    viewerStage.setPointerCapture(event.pointerId);
+    activateViewer();
+  });
+  viewerStage.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+    drag.x = event.clientX;
+    drag.y = event.clientY;
+    if (dx || dy) rotateViewer(-dy, -dx, Math.hypot(dx, dy) * Math.PI / Math.min(viewerStage.clientWidth, viewerStage.clientHeight));
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    viewerStage.addEventListener(type, event => { if (drag?.id === event.pointerId) drag = null; });
+  }
+  viewerStage.addEventListener('keydown', event => {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === 'Home') { event.preventDefault(); resetViewer(); return; }
+    const axes = { ArrowLeft: [0, 1], ArrowRight: [0, -1], ArrowUp: [1, 0], ArrowDown: [-1, 0] };
+    if (!Object.hasOwn(axes, event.key)) return;
+    event.preventDefault();
+    rotateViewer(...axes[event.key], Math.PI / 12);
+  });
+
   viewerControls.addEventListener('click', event => {
     const button = event.target.closest('[data-finish]');
     if (!button || !cardViewer) return;
+    activateViewer();
     selectedFinish = button.dataset.finish;
     cardViewer.setFinish(selectedFinish);
     viewerControls.querySelectorAll('[data-finish]').forEach(option => {
       option.setAttribute('aria-pressed', String(option === button));
     });
   });
-  $('#viewer-flip').addEventListener('click', () => cardViewer?.flip());
-  $('#viewer-reset').addEventListener('click', () => cardViewer?.resetView());
+  $('#viewer-flip').addEventListener('click', () => { activateViewer(); cardViewer?.flip(); });
+  $('#viewer-reset').addEventListener('click', resetViewer);
 
   const escapeHTML = (text) => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const cardArt = (card, {lazy = false, priority = false} = {}) => {
@@ -326,13 +399,16 @@
     const card = cards.find(item => item.id === id);
     if (!card) return;
     clearViewer();
-    $('#detail-art').innerHTML = cardArt(card, {priority:true});
+    activeCard = card;
+    $('#detail-art').innerHTML = `<div class="detail-poster"><img src="${escapeHTML(card.image)}" alt="" draggable="false" decoding="async" fetchpriority="high"></div>`;
     $('#detail-art').hidden = false;
-    $('#detail-visual').classList.add('has-viewer');
     viewerStage.hidden = false;
+    viewerStage.setAttribute('aria-label', `${card.bank} ${card.name}，点击或拖动环绕查看，方向键旋转，Home 复位`);
     viewerStage.setAttribute('aria-busy', 'true');
     viewerStatus.textContent = '';
     viewerStatus.hidden = true;
+    viewerControls.hidden = false;
+    viewerControls.querySelectorAll('button').forEach(button => { button.disabled = true; });
     $('#detail-title').textContent = card.name;
     $('#detail-bank').innerHTML = `${bankLogo(card.bank)}<span>${escapeHTML(card.bank)}</span>`;
     $('#detail-type').textContent = cardTypeAndNetworks(card);
@@ -344,6 +420,7 @@
       $('.dialog-content').scrollTop = 0;
       $('#close-dialog').focus({preventScroll:true});
     }
+    layoutPoster();
     void showCardViewer(card, viewerRequest);
   }
 

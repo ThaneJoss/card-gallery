@@ -1,7 +1,7 @@
 // Run pnpm test:browser (Chromium must be installed).
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -29,23 +29,27 @@ let browser;
 let page;
 const frames = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 const canvas = page => page.locator('#detail-viewer canvas.card-viewer-canvas');
+const stage = page => page.locator('#detail-viewer');
 async function snapshot(page, name) {
   await frames(page);
-  // Compare scenes with the same focus state; restore focus for keyboard tests.
-  const focused = await page.evaluateHandle(() => document.activeElement);
-  await focused.evaluate(element => element.blur());
-  try {
-    return await canvas(page).screenshot({ path: resolve(output, `${name}.png`) });
-  } finally {
-    await focused.evaluate(element => element.focus({ preventScroll: true }));
-    await focused.dispose();
-  }
+  // Keep the actual focus/touch state. Only omit the focus ring in comparison images.
+  const box = await page.locator('#detail-visual').boundingBox();
+  const viewport = await page.screenshot({ scale: 'css', style: '#detail-viewer:focus-visible { outline: none !important; }' });
+  const screenshot = await sharp(viewport).extract({ left: Math.floor(box.x), top: Math.floor(box.y), width: Math.floor(box.width), height: Math.floor(box.height) }).png().toBuffer();
+  await writeFile(resolve(output, `${name}.png`), screenshot);
+  return screenshot;
 }
 async function difference(a, b) {
   const first = await sharp(a).removeAlpha().raw().toBuffer();
   const second = await sharp(b).removeAlpha().raw().toBuffer();
   assert.equal(first.length, second.length, '比较画面的尺寸必须一致');
   return first.reduce((sum, value, index) => sum + Math.abs(value - second[index]), 0) / first.length;
+}
+async function largestPixelDifference(a, b) {
+  const first = await sharp(a).removeAlpha().raw().toBuffer();
+  const second = await sharp(b).removeAlpha().raw().toBuffer();
+  assert.equal(first.length, second.length);
+  return first.reduce((largest, value, i) => Math.max(largest, Math.abs(value - second[i])), 0);
 }
 function observe(page) {
   page.on('pageerror', error => errors.push(error.message));
@@ -58,7 +62,8 @@ async function openCard(page, id) {
   await page.waitForFunction(() => document.querySelector('#detail-viewer')?.getAttribute('aria-busy') === 'false' && document.querySelector('#detail-viewer canvas'));
   await canvas(page).waitFor({ state: 'visible' });
   assert.equal(await canvas(page).count(), 1, '详情只能存在一个渲染画布');
-  assert.equal(await page.locator('#detail-art').isVisible(), false, '3D就绪后原图应隐藏');
+  assert.equal(await page.locator('#detail-art').isVisible(), true, '未交互时3D就绪也必须保留大图');
+  assert.equal(await page.locator('#detail-visual').evaluate(element => element.classList.contains('is-interactive')), false);
 }
 async function closeCard(page, id, escape = true) {
   if (escape) await page.keyboard.press('Escape');
@@ -82,6 +87,9 @@ try {
   browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader'] });
   page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   observe(page);
+  let releaseBundle;
+  const bundleGate = new Promise(resolve => { releaseBundle = resolve; });
+  await page.route('**/card-viewer.js', async route => { await bundleGate; await route.continue(); });
   await page.goto(origin);
   const cards = await page.evaluate(async () => Promise.all(window.CARD_GALLERY_DATA.map(async card => {
     const image = new Image(); image.src = card.image; await image.decode();
@@ -92,7 +100,36 @@ try {
   const otherHorizontal = cards.find(card => card.width > card.height && card.id !== horizontal?.id);
   assert.ok(vertical?.height > vertical?.width && otherHorizontal, '回归数据须包含真正的竖版卡及第二张横版卡');
   assert.ok(horizontal && vertical, '回归数据须包含横卡和竖卡');
-  await openCard(page, horizontal.id);
+  await page.locator(`button[data-card="${horizontal.id}"]`).click();
+  await page.waitForFunction(() => document.querySelector('#detail-art img')?.complete);
+  const beforeReady = await snapshot(page, 'poster-before-ready');
+  const posterBounds = await page.locator('.detail-poster').boundingBox();
+  assert.equal(await page.locator('#detail-viewer-status').isVisible(), false);
+  releaseBundle();
+  await page.waitForFunction(() => document.querySelector('#detail-viewer')?.getAttribute('aria-busy') === 'false');
+  await page.unroute('**/card-viewer.js');
+  const poster = await snapshot(page, 'poster-after-ready');
+  // GPU compositing can round antialiased edges by two color levels; layout must stay exact.
+  assert.ok(await largestPixelDifference(beforeReady, poster) <= 2, '3D加载完成不能改变未交互的大图画面');
+  assert.deepEqual(await page.locator('.detail-poster').boundingBox(), posterBounds, '加载完成不能挪动大图或撑高弹窗');
+  const assertPosterRestored = async name => {
+    assert.equal(await page.locator('#detail-art').isVisible(), true);
+    assert.deepEqual(await page.locator('.detail-poster').boundingBox(), posterBounds, '大图位置和尺寸必须保持不变');
+    const visual = await page.locator('#detail-visual').boundingBox();
+    const corner = Math.ceil(await page.locator('.detail-poster').evaluate(element => parseFloat(getComputedStyle(element).borderRadius))) + 2;
+    const interior = { left: Math.ceil(posterBounds.x - Math.floor(visual.x)) + corner,
+      top: Math.ceil(posterBounds.y - Math.floor(visual.y)) + corner,
+      width: Math.floor(posterBounds.width) - corner * 2, height: Math.floor(posterBounds.height) - corner * 2 };
+    // Ignore only the rounded clipping edge, whose alpha is composited differently over WebGL.
+    const expected = await sharp(poster).extract(interior).png().toBuffer();
+    const actual = await sharp(await snapshot(page, name)).extract(interior).png().toBuffer();
+    assert.equal(await difference(expected, actual), 0, '复位或重开时大图内容不能变成3D渲染');
+  };
+  assert.ok(await page.locator('.detail-poster').evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return getComputedStyle(element).pointerEvents === 'none' && getComputedStyle(element).userSelect === 'none' &&
+      document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('#detail-viewer');
+  }), '大图不可选中且点击应穿透到底层交互区');
   await page.evaluate(() => {
     const canvas = document.querySelector('#detail-viewer canvas');
     const context = canvas.getContext('webgl2');
@@ -122,8 +159,23 @@ try {
   const back = await finishes(page, 'back');
   assert.ok(await difference(front, back) > 0, '翻面按钮应显示不同的背面');
   await page.locator('#viewer-reset').click();
-  assert.equal(await difference(front, await snapshot(page, 'reset')), 0, '复位应恢复正面相机');
-  await canvas(page).focus();
+  await assertPosterRestored('reset');
+  await stage(page).click();
+  assert.equal(await difference(front, await snapshot(page, 'aligned-front')), 0, '点击大图应从相同的正面视角进入3D');
+  const rendered = await sharp(await snapshot(page, 'aligned-bounds')).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const occupied = { left: Infinity, top: Infinity, right: 0, bottom: 0 };
+  for (let y = 6; y < rendered.info.height - 6; y++) for (let x = 6; x < rendered.info.width - 6; x++) {
+    const offset = (y * rendered.info.width + x) * 3;
+    if (Math.max(Math.abs(rendered.data[offset] - 241), Math.abs(rendered.data[offset + 1] - 243), Math.abs(rendered.data[offset + 2] - 246)) > 10) {
+      occupied.left = Math.min(occupied.left, x); occupied.right = Math.max(occupied.right, x);
+      occupied.top = Math.min(occupied.top, y); occupied.bottom = Math.max(occupied.bottom, y);
+    }
+  }
+  const stageBounds = await stage(page).boundingBox();
+  assert.ok(Math.abs(occupied.left - (posterBounds.x - stageBounds.x)) < 2 && Math.abs(occupied.top - (posterBounds.y - stageBounds.y)) < 2 &&
+    Math.abs(occupied.right + 1 - (posterBounds.x - stageBounds.x + posterBounds.width)) < 2 && Math.abs(occupied.bottom + 1 - (posterBounds.y - stageBounds.y + posterBounds.height)) < 2,
+  `大图和正面模型边界应在2px内重合：${JSON.stringify({ occupied, posterBounds, stageBounds })}`);
+  await stage(page).focus();
   await page.keyboard.press('ArrowUp');
   assert.ok(await difference(front, await snapshot(page, 'tilted-up')) > 0, '方向键应改变相机俯仰');
   for (let step = 1; step < 24; step += 1) await page.keyboard.press('ArrowUp');
@@ -131,7 +183,7 @@ try {
   await page.keyboard.press('ArrowRight');
   assert.ok(await difference(front, await snapshot(page, 'yaw-right')) > 0, '左右方向键应旋转相机');
   await page.keyboard.press('Home');
-  assert.equal(await difference(front, await snapshot(page, 'home')), 0, 'Home应复位');
+  await assertPosterRestored('home');
   const box = await canvas(page).boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -171,7 +223,7 @@ try {
   }));
   await openCard(page, horizontal.id);
   await assertSharedRenderer();
-  assert.equal(await difference(front, await snapshot(page, 'reopened')), 0, '重新打开应恢复对应卡片默认画面');
+  await assertPosterRestored('reopened');
   await closeCard(page, horizontal.id);
   await openCard(page, horizontal.id);
   await closeCard(page, horizontal.id);
@@ -199,6 +251,7 @@ try {
   await closeCard(page, uncached.id);
   await openCard(page, vertical.id);
   await assertSharedRenderer();
+  await stage(page).click();
   const latestCard = await snapshot(page, 'race-latest-card');
   const oldResponse = page.waitForResponse(oldImageURL);
   releaseImage();
@@ -212,10 +265,42 @@ try {
   await page.unroute(oldImageURL);
 
   await page.close();
-  page = await browser.newPage({ viewport: { width: 320, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1, reducedMotion: 'reduce' });
-  observe(page);
-  await page.goto(origin);
-  await openCard(page, vertical.id);
+  async function openWithPendingTouch() {
+    const mobile = await browser.newPage({ viewport: { width: 320, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1, reducedMotion: 'reduce' });
+    await mobile.bringToFront();
+    observe(mobile);
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    await mobile.route('**/card-viewer.js', async route => { await gate; await route.continue(); });
+    await mobile.goto(origin);
+    await mobile.locator(`button[data-card="${vertical.id}"]`).tap();
+    const box = await stage(mobile).boundingBox();
+    const touch = await mobile.context().newCDPSession(mobile);
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.x + box.width / 2, y: box.y + box.height / 2 }] });
+    await frames(mobile);
+    for (let step = 1; step <= 4; step++) {
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.x + box.width / 2 + 45 * step / 4, y: box.y + box.height / 2 + 30 * step / 4 }] });
+      await frames(mobile);
+    }
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await frames(mobile);
+    assert.equal(await mobile.locator('#detail-art').isVisible(), true, '模型未就绪时保留大图并记录触摸');
+    release();
+    await mobile.waitForFunction(() => document.querySelector('#detail-viewer').getAttribute('aria-busy') === 'false');
+    assert.equal(await mobile.locator('#detail-art').isVisible(), false, '模型就绪后应接上之前的触摸操作');
+    return mobile;
+  }
+  // Capture the queued-drag result separately from the uninterrupted touch/control sequence.
+  page = await openWithPendingTouch();
+  const pendingTouch = await snapshot(page, 'pending-touch');
+  await page.close();
+  page = await openWithPendingTouch();
+  await page.locator('#viewer-reset').tap();
+  await page.waitForFunction(() => !document.querySelector('#detail-visual').classList.contains('is-interactive'));
+  assert.equal(await page.locator('#detail-art').isVisible(), true, '触摸复位按钮应恢复大图');
+  await stage(page).tap();
+  await page.waitForFunction(() => document.querySelector('#detail-visual').classList.contains('is-interactive'));
+  assert.equal(await page.evaluate(() => window.getSelection().toString()), '', '触摸卡面不能选中文字或图片');
   for (const finish of ['matte', 'gloss', 'iridescent']) {
     const button = page.locator(`[data-finish="${finish}"]`);
     await button.tap();
@@ -223,6 +308,8 @@ try {
     const bounds = await button.boundingBox();
     assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 320, '320px下材质按钮不能溢出');
   }
+  await page.locator('[data-finish="matte"]').tap();
+  assert.ok(await difference(pendingTouch, await snapshot(page, 'touch-front')) > 1, '模型加载期间的拖动不能丢失');
   await page.locator('#detail-title').evaluate(element => { element.textContent = '超长中文卡片名称（全角括号）银行卡收藏三维展示测试'.repeat(3); });
   assert.ok(await page.locator('#card-dialog').evaluate(element => element.scrollWidth <= element.clientWidth), '长中文名称不能造成横向溢出');
   await page.screenshot({ path: resolve(output, 'mobile-portrait.png'), fullPage: true });
