@@ -87,9 +87,28 @@ try {
     return { ...card, width: image.naturalWidth, height: image.naturalHeight };
   })));
   const horizontal = cards.find(card => card.width > card.height);
-  const vertical = cards.find(card => card.height > card.width);
+  const vertical = cards.find(card => card.id === 'citic-visa-platinum-debit');
+  const otherHorizontal = cards.find(card => card.width > card.height && card.id !== horizontal?.id);
+  assert.ok(vertical?.height > vertical?.width && otherHorizontal, '回归数据须包含真正的竖版卡及第二张横版卡');
   assert.ok(horizontal && vertical, '回归数据须包含横卡和竖卡');
   await openCard(page, horizontal.id);
+  await page.evaluate(() => {
+    const canvas = document.querySelector('#detail-viewer canvas');
+    const context = canvas.getContext('webgl2');
+    window.__viewerRegression = { canvas, context, geometryUploads: 0 };
+    const bufferData = context.bufferData;
+    context.bufferData = function(target, ...args) {
+      if (target === context.ARRAY_BUFFER) window.__viewerRegression.geometryUploads += 1;
+      return bufferData.call(this, target, ...args);
+    };
+  });
+  const assertSharedRenderer = async () => {
+    assert.ok(await page.evaluate(() => {
+      const canvas = document.querySelector('#detail-viewer canvas');
+      return canvas === window.__viewerRegression.canvas && canvas.getContext('webgl2') === window.__viewerRegression.context;
+    }), '换卡和重新打开必须复用同一个canvas及WebGL context');
+    assert.equal(await page.evaluate(() => window.__viewerRegression.geometryUploads), 0, '换卡只能更新纹理或姿态，不得重新上传模型顶点缓冲');
+  };
   const front = await finishes(page, 'front');
   await page.locator('#viewer-flip').click();
   const back = await finishes(page, 'back');
@@ -122,12 +141,53 @@ try {
   assert.equal(await difference(front, await snapshot(page, 'drag-full-pitch')), 0, '上下拖动整圈应回到初始视角');
   await closeCard(page, horizontal.id);
   await openCard(page, vertical.id);
+  await assertSharedRenderer();
   const portrait = await snapshot(page, 'portrait');
+  await snapshot(page, 'citic-visa-platinum-debit');
   assert.ok(await difference(front, portrait) > 0, '换卡后应显示新卡面');
   await closeCard(page, vertical.id, false);
+  await openCard(page, otherHorizontal.id);
+  await assertSharedRenderer();
+  await page.locator('[data-finish="matte"]').click();
+  await page.locator('#viewer-reset').click();
+  await page.locator('#viewer-flip').click();
+  assert.equal(await difference(back, await snapshot(page, 'other-horizontal-back')), 0, '不同横版素材应共用固定模型几何和取景，纯色背面应完全一致');
+  await closeCard(page, otherHorizontal.id, false);
+  await openCard(page, 'cmb-koi-debit');
+  await assertSharedRenderer();
+  await snapshot(page, 'photo-texture');
+  await closeCard(page, 'cmb-koi-debit');
   await openCard(page, horizontal.id);
+  await assertSharedRenderer();
   assert.equal(await difference(front, await snapshot(page, 'reopened')), 0, '重新打开应恢复对应卡片默认画面');
   await closeCard(page, horizontal.id);
+
+  // Hold the old card's image response while a newer selection becomes ready.
+  let releaseImage;
+  const imageGate = new Promise(resolve => { releaseImage = resolve; });
+  const oldImageURL = new URL(horizontal.image, origin + '/').href;
+  const pendingImage = page.waitForRequest(oldImageURL);
+  await page.route(oldImageURL, async route => {
+    await imageGate;
+    await route.continue();
+  });
+  await page.locator(`button[data-card="${horizontal.id}"]`).click();
+  await pendingImage;
+  assert.equal(await page.locator('#detail-viewer').getAttribute('aria-busy'), 'true', '旧卡应仍在加载');
+  await closeCard(page, horizontal.id);
+  await openCard(page, vertical.id);
+  await assertSharedRenderer();
+  const latestCard = await snapshot(page, 'race-latest-card');
+  const oldResponse = page.waitForResponse(oldImageURL);
+  releaseImage();
+  await (await oldResponse).finished();
+  await frames(page);
+  await assertSharedRenderer();
+  assert.equal(await difference(latestCard, await snapshot(page, 'race-after-old-image')), 0, '旧纹理迟到后不得覆盖当前卡面');
+  assert.ok((await canvas(page).getAttribute('aria-label')).includes(vertical.name), '旧加载不得覆盖当前卡片名称');
+  assert.equal(await canvas(page).count(), 1, '加载竞争后只能存在一个canvas');
+  await closeCard(page, vertical.id);
+  await page.unroute(oldImageURL);
 
   await page.close();
   page = await browser.newPage({ viewport: { width: 320, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1, reducedMotion: 'reduce' });

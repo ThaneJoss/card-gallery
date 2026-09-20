@@ -87,6 +87,8 @@
   类型: 储蓄卡
   # 来源：https://battlele.com/cmb-credit-card/，锦鲤卡实物照片。
   图片: ./assets/cards/cmb-koi-debit.jpg
+  # 原图包含桌面。四角仅定义三维贴图区域，按左上、右上、右下、左下排列，坐标除以原图宽高。
+  贴图四角: [[0.237, 0.266], [0.685, 0.259], [0.777, 0.674], [0.194, 0.674]]
   卡组织: 银联
   编号: cmb-koi-debit
   # BIN 核对：招行银联 IC 普卡借记卡，https://www.chakahao.com/cardbin/html/621483.html。

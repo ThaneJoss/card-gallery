@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createCardTextureMapping } from './card-texture.mjs';
 
 const FINISHES = {
   matte: { roughness: .95, metalness: 0, specularIntensity: .12, clearcoat: 0, clearcoatRoughness: 1, iridescence: 0, envMapIntensity: .85 },
@@ -22,16 +23,17 @@ function roundedRectangle(width, height, radius) {
 }
 
 /** Creates one on-demand viewer. The caller owns the surrounding controls. */
-export async function createCardViewer({ container, image, name, finish = 'matte', onFinishChange = () => {} }) {
+export function createCardViewer({ container, finish = 'matte', onFinishChange = () => {} }) {
   if (!Object.hasOwn(FINISHES, finish)) throw new RangeError('未知卡片材质');
   const resources = new Set();
   const own = resource => { resources.add(resource); return resource; };
-  let renderer, observer, canvas, animation = 0, disposed = false, drag = null;
+  let renderer, observer, canvas, animation = 0, disposed = false, drag = null, cardRequest = 0;
   const events = new AbortController();
 
   function dispose() {
     if (disposed) return;
     disposed = true;
+    cardRequest++;
     cancelAnimationFrame(animation);
     observer?.disconnect();
     events.abort();
@@ -45,13 +47,7 @@ export async function createCardViewer({ container, image, name, finish = 'matte
   }
 
   try {
-    const texture = own(await new THREE.TextureLoader().loadAsync(image));
-    const imageWidth = texture.image.naturalWidth || texture.image.width;
-    const imageHeight = texture.image.naturalHeight || texture.image.height;
-    if (!(imageWidth > 0 && imageHeight > 0)) throw new Error('卡面图片尺寸无效');
-    const scale = 8.53 / Math.max(imageWidth, imageHeight);
-    const width = imageWidth * scale, height = imageHeight * scale;
-    const corner = Math.min(.28, Math.min(width, height) / 4);
+    const width = 8.53, height = 5.4, corner = .28;
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -61,16 +57,15 @@ export async function createCardViewer({ container, image, name, finish = 'matte
     canvas.className = 'card-viewer-canvas';
     canvas.tabIndex = 0;
     canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', `${name || '银行卡'}的三维预览。拖动或使用方向键环绕查看，Home 键复位。`);
+    canvas.setAttribute('aria-label', '银行卡的三维预览。拖动或使用方向键环绕查看，Home 键复位。');
     canvas.style.touchAction = 'none';
     canvas.style.display = 'block';
     container.appendChild(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(36, 1, .1, 100);
     const card = new THREE.Group();
+    card.visible = false;
     scene.add(card);
     const initialOrbit = new THREE.Quaternion().setFromEuler(new THREE.Euler(-.17, -.35, .025)).invert();
     const orbit = initialOrbit.clone();
@@ -119,7 +114,17 @@ export async function createCardViewer({ container, image, name, finish = 'matte
     for (let i = 0; i < positions.count; i++) {
       uv.setXY(i, (positions.getX(i) + width / 2) / width, (positions.getY(i) + height / 2) / height);
     }
-    const frontMaterial = own(new THREE.MeshPhysicalMaterial({ map: texture, transparent: true }));
+    const frontMaterial = own(new THREE.MeshPhysicalMaterial({ transparent: true }));
+    const textureProjection = new THREE.Matrix3();
+    frontMaterial.onBeforeCompile = shader => {
+      shader.uniforms.cardTextureProjection = { value: textureProjection };
+      const projectedMap = THREE.ShaderChunk.map_fragment.replace(
+        'vec4 sampledDiffuseColor = texture2D( map, vMapUv );',
+        'vec3 cardUv = cardTextureProjection * vec3( vMapUv, 1.0 );\n\tvec4 sampledDiffuseColor = texture2D( map, cardUv.xy / cardUv.z );',
+      );
+      shader.fragmentShader = 'uniform mat3 cardTextureProjection;\n' + shader.fragmentShader.replace('#include <map_fragment>', projectedMap);
+    };
+    frontMaterial.customProgramCacheKey = () => 'card-projective-texture-v1';
     const backMaterial = own(new THREE.MeshPhysicalMaterial({ color: 0xc9d7d2 }));
     const front = new THREE.Mesh(faceGeometry, frontMaterial);
     front.position.z = .061;
@@ -170,6 +175,61 @@ export async function createCardViewer({ container, image, name, finish = 'matte
       render();
     }
     function stopAnimation() { cancelAnimationFrame(animation); animation = 0; }
+    // Geometry is shared for the lifetime of this viewer; cards only replace its texture.
+    async function setCard({ image, name, textureCorners }) {
+      if (disposed) return false;
+      const request = ++cardRequest;
+      let texture;
+      try {
+        texture = await new THREE.TextureLoader().loadAsync(image);
+      } catch (error) {
+        if (disposed || request !== cardRequest) return false;
+        throw error;
+      }
+      if (disposed || request !== cardRequest) {
+        texture.dispose();
+        return false;
+      }
+      let mapping;
+      try {
+        mapping = createCardTextureMapping({
+          width: texture.image.naturalWidth || texture.image.width,
+          height: texture.image.naturalHeight || texture.image.height,
+          textureCorners,
+        });
+      } catch (error) {
+        texture.dispose();
+        throw error;
+      }
+      textureProjection.set(...mapping.projection);
+      card.rotation.z = mapping.portrait ? Math.PI / 2 : 0;
+      card.visible = true;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      const previous = frontMaterial.map;
+      frontMaterial.map = own(texture);
+      frontMaterial.needsUpdate = true;
+      if (previous) { previous.dispose(); resources.delete(previous); }
+      canvas.setAttribute('aria-label', `${name || '银行卡'}的三维预览。拖动或使用方向键环绕查看，Home 键复位。`);
+      render();
+      return true;
+    }
+    function clearCard() {
+      if (disposed) return;
+      cardRequest++;
+      stopAnimation();
+      orbit.copy(initialOrbit);
+      card.rotation.z = 0;
+      card.visible = false;
+      if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
+      drag = null;
+      const previous = frontMaterial.map;
+      frontMaterial.map = null;
+      frontMaterial.needsUpdate = true;
+      if (previous) { previous.dispose(); resources.delete(previous); }
+      canvas.setAttribute('aria-label', '银行卡的三维预览。拖动或使用方向键环绕查看，Home 键复位。');
+      render();
+    }
     function setFinish(nextFinish) {
       if (disposed) return;
       if (!Object.hasOwn(FINISHES, nextFinish)) throw new RangeError('未知卡片材质');
@@ -241,7 +301,7 @@ export async function createCardViewer({ container, image, name, finish = 'matte
     observer = new ResizeObserver(resize);
     observer.observe(container);
     resize();
-    return { setFinish, flip, resetView, dispose };
+    return { setCard, clearCard, setFinish, flip, resetView, dispose };
   } catch (error) {
     dispose();
     throw error;

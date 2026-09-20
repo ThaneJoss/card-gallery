@@ -38,10 +38,13 @@
       if (!['credit', 'debit'].includes(type)) throw new Error(`${label}的 type 只能是 credit 或 debit。`);
       const networks = item.networks ?? [];
       if (!Array.isArray(networks) || ![...networks].every(network => supportedNetworks.has(network))) throw new Error(`${label}的 networks 须为卡组织数组：${[...supportedNetworks].join('、')}。`);
+      const textureCorners = item.textureCorners;
+      if (textureCorners !== undefined && (!Array.isArray(textureCorners) || textureCorners.length !== 4 || !textureCorners.every(point => Array.isArray(point) && point.length === 2 && point.every(value => Number.isFinite(value) && value >= 0 && value <= 1)))) throw new Error(`${label}的 textureCorners 须为四个归一化坐标。`);
       return {
         id, name: text('name'), bank: text('bank'), type,
         networks: [...new Set(networks)],
-        image: imagePath('image')
+        image: imagePath('image'),
+        ...(textureCorners ? { textureCorners } : {})
       };
     });
   }
@@ -88,11 +91,10 @@
     return viewerBundle;
   }
 
-  function releaseViewer() {
+  function clearViewer() {
     viewerRequest += 1;
-    cardViewer?.dispose();
-    cardViewer = null;
-    viewerStage.replaceChildren();
+    cardViewer?.clearCard();
+    viewerStage.hidden = true;
     viewerStage.setAttribute('aria-busy', 'false');
     viewerControls.hidden = true;
   }
@@ -101,16 +103,9 @@
     try {
       const { createCardViewer } = await loadViewerBundle();
       if (request !== viewerRequest || !dialog.open) return;
-      const mount = document.createElement('div');
-      mount.className = 'card-viewer-mount';
-      viewerStage.appendChild(mount);
-      const viewer = await createCardViewer({ container: mount, image: card.image, name: `${card.bank} ${card.name}`, finish: selectedFinish });
-      if (request !== viewerRequest || !dialog.open) {
-        viewer.dispose();
-        mount.remove();
-        return;
-      }
-      cardViewer = viewer;
+      if (!cardViewer) cardViewer = createCardViewer({ container: viewerStage, finish: selectedFinish });
+      const applied = await cardViewer.setCard({ image: card.image, name: `${card.bank} ${card.name}`, textureCorners: card.textureCorners });
+      if (!applied || request !== viewerRequest || !dialog.open) return;
       $('#detail-art').hidden = true;
       viewerStage.setAttribute('aria-busy', 'false');
       viewerStatus.hidden = true;
@@ -120,7 +115,7 @@
       });
     } catch {
       if (request !== viewerRequest || !dialog.open) return;
-      viewerStage.replaceChildren();
+      cardViewer?.clearCard();
       viewerStage.hidden = true;
       viewerStage.setAttribute('aria-busy', 'false');
       $('#detail-visual').classList.remove('has-viewer');
@@ -324,7 +319,7 @@
   function showCard(id) {
     const card = cards.find(item => item.id === id);
     if (!card) return;
-    releaseViewer();
+    clearViewer();
     $('#detail-art').innerHTML = cardArt(card, {priority:true});
     $('#detail-art').hidden = false;
     $('#detail-visual').classList.add('has-viewer');
@@ -389,10 +384,15 @@
   });
   dialog.addEventListener('close', () => {
     if (dialog.open) return;
-    releaseViewer();
+    clearViewer();
     if (lastFocusedCard?.isConnected) lastFocusedCard.focus({preventScroll:true});
   });
-  window.addEventListener('pagehide', event => { if (!event.persisted) releaseViewer(); });
+  window.addEventListener('pagehide', event => {
+    if (event.persisted) return;
+    clearViewer();
+    cardViewer?.dispose();
+    cardViewer = null;
+  });
 
   render();
   $('.filters').hidden = false;
