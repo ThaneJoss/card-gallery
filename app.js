@@ -101,12 +101,18 @@
     viewerControls.hidden = true;
   }
 
+  async function prepareViewer() {
+    if (cardViewer) return cardViewer;
+    const { createCardViewer } = await loadViewerBundle();
+    if (!cardViewer) cardViewer = createCardViewer({ container: viewerStage, finish: selectedFinish });
+    return cardViewer;
+  }
+
   async function showCardViewer(card, request) {
     try {
-      const { createCardViewer } = await loadViewerBundle();
+      const viewer = await prepareViewer();
       if (request !== viewerRequest || !dialog.open) return;
-      if (!cardViewer) cardViewer = createCardViewer({ container: viewerStage, finish: selectedFinish });
-      const applied = await cardViewer.setCard({ image: card.image, name: `${card.bank} ${card.name}`, textureCorners: card.textureCorners });
+      const applied = await viewer.setCard({ image: card.image, name: `${card.bank} ${card.name}`, textureCorners: card.textureCorners });
       if (!applied || request !== viewerRequest || !dialog.open) return;
       $('#detail-art').hidden = true;
       viewerStage.setAttribute('aria-busy', 'false');
@@ -356,8 +362,8 @@
     $('#detail-visual').classList.add('has-viewer');
     viewerStage.hidden = false;
     viewerStage.setAttribute('aria-busy', 'true');
-    viewerStatus.textContent = '正在准备立体卡面…';
-    viewerStatus.hidden = false;
+    viewerStatus.textContent = '';
+    viewerStatus.hidden = true;
     $('#detail-title').textContent = card.name;
     $('#detail-bank').innerHTML = `${bankLogo(card.bank)}<span>${escapeHTML(card.bank)}</span>`;
     $('#detail-type').textContent = cardTypeAndNetworks(card);
@@ -428,6 +434,15 @@
   render();
   $('.filters').hidden = false;
   $('.results-note').hidden = false;
+
+  // Warm the shared studio after the gallery has loaded, without a loading notice.
+  const warmViewer = () => {
+    const prepare = () => { void prepareViewer().catch(() => {}); };
+    if (window.requestIdleCallback) window.requestIdleCallback(prepare);
+    else window.setTimeout(prepare, 0);
+  };
+  if (document.readyState === 'complete') warmViewer();
+  else window.addEventListener('load', warmViewer, { once: true });
 
   if (document.modelContext?.registerTool) {
     const lifecycle = new AbortController();
