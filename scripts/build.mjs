@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
+import { build as bundle } from 'esbuild';
 import { parseCards } from './card-data.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,6 +28,20 @@ export async function buildSite({ root = projectRoot, log = console.log } = {}) 
       await mkdir(dirname(destination), { recursive: true });
       await cp(resolve(root, file), destination, { recursive: true });
     }
+
+    await bundle({
+      entryPoints: [resolve(root, 'src/card-viewer.js')],
+      outfile: resolve(output, 'card-viewer.js'),
+      nodePaths: [resolve(projectRoot, 'node_modules')],
+      bundle: true,
+      minify: true,
+      format: 'iife',
+      globalName: 'CardGallery3D',
+      target: ['es2022'],
+      legalComments: 'inline',
+      banner: { js: '/*! Three.js - MIT License; see card-viewer.LICENSE.txt */' }
+    });
+    await cp(resolve(projectRoot, 'node_modules/three/LICENSE'), resolve(output, 'card-viewer.LICENSE.txt'));
 
     const builtCards = new Array(cards.length);
     // 每批最多处理四张，避免卡片增多时同时下载全部原图。

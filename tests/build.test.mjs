@@ -17,7 +17,7 @@ const card = (id, image) => ({ 编号: id, 名称: '测试卡片', 银行: '测�
 async function fixture(t, cards) {
   const root = await mkdtemp(resolve(tmpdir(), 'card-gallery-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  for (const file of ['index.html', 'app.js', 'styles.css', '.nojekyll', 'assets/card-mark.svg', 'assets/logos']) {
+  for (const file of ['index.html', 'app.js', 'styles.css', 'src', '.nojekyll', 'assets/card-mark.svg', 'assets/logos']) {
     await mkdir(dirname(resolve(root, file)), { recursive: true });
     await cp(resolve(projectRoot, file), resolve(root, file), { recursive: true });
   }
@@ -81,7 +81,10 @@ test('远程 PNG/JPEG 与重定向可生成独立站点，源码不变，图片�
       assert.equal(metadata.height, 250);
     }
   }
-  assert.deepEqual((await readdir(resolve(root, 'public'))).sort(), ['.nojekyll', 'app.js', 'assets', 'cards', 'cards.js', 'index.html', 'styles.css']);
+  assert.deepEqual((await readdir(resolve(root, 'public'))).sort(), ['.nojekyll', 'app.js', 'assets', 'card-viewer.LICENSE.txt', 'card-viewer.js', 'cards', 'cards.js', 'index.html', 'styles.css']);
+  const viewerContext = {};
+  runInNewContext(await readFile(resolve(root, 'public/card-viewer.js'), 'utf8'), viewerContext);
+  assert.equal(typeof viewerContext.CardGallery3D.createCardViewer, 'function');
   await assert.rejects(readFile(resolve(root, 'public/assets/collection.webp')), { code: 'ENOENT' });
 
   // 删除卡片后重新构建，旧卡面必须从发布目录消失。
