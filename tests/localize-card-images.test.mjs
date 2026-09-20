@@ -242,7 +242,7 @@ test('资料校验失败时不清理已有图片', async t => {
 test('本地化后可在图片源离线时构建，重复运行不会增加文件或改写资料', async t => {
   const { url, close } = await imageServer(t);
   const root = await fixture(t, stringify([card('offline', `${url}/redirect`)]));
-  for (const file of ['index.html', 'app.js', 'styles.css', '.nojekyll', 'assets/card-mark.svg', 'assets/logos']) {
+  for (const file of ['index.html', 'app.js', 'styles.css', 'src', '.nojekyll', 'assets/card-mark.svg', 'assets/logos']) {
     await mkdir(dirname(resolve(root, file)), { recursive: true });
     await cp(resolve(projectRoot, file), resolve(root, file), { recursive: true });
   }

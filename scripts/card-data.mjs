@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 
-const fields = new Set(['名称', '银行', '类型', '图片', '卡组织', '编号', 'bin']);
+const fields = new Set(['名称', '银行', '类型', '图片', '卡组织', '编号', 'bin', '贴图四角']);
 const types = new Map([['信用卡', 'credit'], ['储蓄卡', 'debit']]);
 const networks = new Map([
   ['visa', 'visa'], ['mastercard', 'mastercard'], ['万事达', 'mastercard'],
@@ -63,10 +63,22 @@ export function parseCards(source) {
       if (!network) throw new Error(`${label}的卡组织「${name}」无效，可填写 Visa、Mastercard、银联、Amex、JCB 或 Discover。`);
       return network;
     });
+    const textureCorners = entry['贴图四角'];
+    if (Object.hasOwn(entry, '贴图四角')) {
+      if (!Array.isArray(textureCorners) || textureCorners.length !== 4 || !textureCorners.every(point => Array.isArray(point) && point.length === 2 && point.every(value => Number.isFinite(value) && value >= 0 && value <= 1))) {
+        throw new Error(`${label}的「贴图四角」须按左上、右上、右下、左下填写四个 [x, y] 坐标，数值范围为 0–1。`);
+      }
+      const turns = textureCorners.map((a, i) => {
+        const b = textureCorners[(i + 1) % 4], c = textureCorners[(i + 2) % 4];
+        return (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
+      });
+      if (!turns.every(turn => turn > 0)) throw new Error(`${label}的「贴图四角」须按顺时针形成不交叉的凸四边形。`);
+    }
     return {
       id, name: text('名称'), bank: text('银行'), type,
       networks: [...new Set(cardNetworks)],
       image: text('图片'),
+      ...(textureCorners ? { textureCorners } : {}),
       ...(bin ? { bin } : {})
     };
   });

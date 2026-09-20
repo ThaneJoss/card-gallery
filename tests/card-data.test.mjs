@@ -65,6 +65,20 @@ test('BIN 长度和内容错误能定位到具体卡片', () => {
   }
 });
 
+test('照片的贴图四角保留归一化坐标，原图路径不变', () => {
+  const corners = [[.2, .1], [.8, .15], [.9, .9], [.1, .8]];
+  const [card] = parseCards(stringify([{ ...minimalCard, 贴图四角: corners }]));
+  assert.deepEqual(card.textureCorners, corners);
+  assert.equal(card.image, minimalCard.图片);
+  assert.equal(Object.hasOwn(parseCards(stringify([minimalCard]))[0], 'textureCorners'), false);
+});
+
+test('贴图四角拒绝越界、缺失、交叉及退化的区域，并定位卡片', () => {
+  for (const corners of [null, [], [[0, 0], [1, 0], [1, 1]], [[0, 0], [2, 0], [1, 1], [0, 1]], [[0, 0], [1, 1], [1, 0], [0, 1]], [[0, 0], [0, 0], [1, 1], [0, 1]], [[0, 0], [1, '0'], [1, 1], [0, 1]]]) {
+    assert.throws(() => parseCards(stringify([minimalCard, { ...minimalCard, 贴图四角: corners }])), /第 2 张卡片的「贴图四角」/);
+  }
+});
+
 test('YAML 语法和重复字段错误包含文件名及出错位置', () => {
   for (const source of ['- 名称: 我的卡\n  银行: [中国银行\n', '- 名称: 第一张\n  名称: 第二张\n']) {
     assert.throws(() => parseCards(source), error => {

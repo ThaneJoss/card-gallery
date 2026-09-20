@@ -40,10 +40,13 @@
       if (!['credit', 'debit'].includes(type)) throw new Error(`${label}的 type 只能是 credit 或 debit。`);
       const networks = item.networks ?? [];
       if (!Array.isArray(networks) || ![...networks].every(network => supportedNetworks.has(network))) throw new Error(`${label}的 networks 须为卡组织数组：${[...supportedNetworks].join('、')}。`);
+      const textureCorners = item.textureCorners;
+      if (textureCorners !== undefined && (!Array.isArray(textureCorners) || textureCorners.length !== 4 || !textureCorners.every(point => Array.isArray(point) && point.length === 2 && point.every(value => Number.isFinite(value) && value >= 0 && value <= 1)))) throw new Error(`${label}的 textureCorners 须为四个归一化坐标。`);
       return {
         id, name: text('name'), bank: text('bank'), type,
         networks: [...new Set(networks)],
-        image: imagePath('image')
+        image: imagePath('image'),
+        ...(textureCorners ? { textureCorners } : {})
       };
     });
   }
@@ -65,6 +68,75 @@
   const dialog = $('#card-dialog');
   const search = $('#search-input');
   let activePicker = null;
+  let cardViewer = null;
+  let viewerRequest = 0;
+  let viewerBundle = null;
+  let selectedFinish = 'matte';
+  const viewerStage = $('#detail-viewer');
+  const viewerControls = $('#detail-viewer-controls');
+  const viewerStatus = $('#detail-viewer-status');
+
+  function loadViewerBundle() {
+    if (!viewerBundle) {
+      viewerBundle = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = './card-viewer.js';
+        script.onload = () => resolve(window.CardGallery3D);
+        script.onerror = () => {
+          script.remove();
+          viewerBundle = null;
+          reject(new Error('三维展示资源加载失败'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+    return viewerBundle;
+  }
+
+  function clearViewer() {
+    viewerRequest += 1;
+    cardViewer?.clearCard();
+    viewerStage.hidden = true;
+    viewerStage.setAttribute('aria-busy', 'false');
+    viewerControls.hidden = true;
+  }
+
+  async function showCardViewer(card, request) {
+    try {
+      const { createCardViewer } = await loadViewerBundle();
+      if (request !== viewerRequest || !dialog.open) return;
+      if (!cardViewer) cardViewer = createCardViewer({ container: viewerStage, finish: selectedFinish });
+      const applied = await cardViewer.setCard({ image: card.image, name: `${card.bank} ${card.name}`, textureCorners: card.textureCorners });
+      if (!applied || request !== viewerRequest || !dialog.open) return;
+      $('#detail-art').hidden = true;
+      viewerStage.setAttribute('aria-busy', 'false');
+      viewerStatus.hidden = true;
+      viewerControls.hidden = false;
+      viewerControls.querySelectorAll('[data-finish]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.finish === selectedFinish));
+      });
+    } catch {
+      if (request !== viewerRequest || !dialog.open) return;
+      cardViewer?.clearCard();
+      viewerStage.hidden = true;
+      viewerStage.setAttribute('aria-busy', 'false');
+      $('#detail-visual').classList.remove('has-viewer');
+      viewerStatus.textContent = '暂时无法显示立体效果，已显示原图。';
+      viewerStatus.hidden = false;
+    }
+  }
+
+  viewerControls.addEventListener('click', event => {
+    const button = event.target.closest('[data-finish]');
+    if (!button || !cardViewer) return;
+    selectedFinish = button.dataset.finish;
+    cardViewer.setFinish(selectedFinish);
+    viewerControls.querySelectorAll('[data-finish]').forEach(option => {
+      option.setAttribute('aria-pressed', String(option === button));
+    });
+  });
+  $('#viewer-flip').addEventListener('click', () => cardViewer?.flip());
+  $('#viewer-reset').addEventListener('click', () => cardViewer?.resetView());
 
   const escapeHTML = (text) => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const cardArt = (card, {lazy = false, priority = false} = {}) => {
@@ -278,7 +350,14 @@
   function showCard(id) {
     const card = cards.find(item => item.id === id);
     if (!card) return;
+    clearViewer();
     $('#detail-art').innerHTML = cardArt(card, {priority:true});
+    $('#detail-art').hidden = false;
+    $('#detail-visual').classList.add('has-viewer');
+    viewerStage.hidden = false;
+    viewerStage.setAttribute('aria-busy', 'true');
+    viewerStatus.textContent = '正在准备立体卡面…';
+    viewerStatus.hidden = false;
     $('#detail-title').textContent = card.name;
     $('#detail-bank').innerHTML = `${bankLogo(card.bank)}<span>${escapeHTML(card.bank)}</span>`;
     $('#detail-type').textContent = cardTypeAndNetworks(card);
@@ -290,6 +369,7 @@
       $('.dialog-content').scrollTop = 0;
       $('#close-dialog').focus({preventScroll:true});
     }
+    void showCardViewer(card, viewerRequest);
   }
 
   function fitDialog() {
@@ -333,7 +413,17 @@
     const rect = dialog.getBoundingClientRect();
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
   });
-  dialog.addEventListener('close', () => { if (lastFocusedCard?.isConnected) lastFocusedCard.focus({preventScroll:true}); });
+  dialog.addEventListener('close', () => {
+    if (dialog.open) return;
+    clearViewer();
+    if (lastFocusedCard?.isConnected) lastFocusedCard.focus({preventScroll:true});
+  });
+  window.addEventListener('pagehide', event => {
+    if (event.persisted) return;
+    clearViewer();
+    cardViewer?.dispose();
+    cardViewer = null;
+  });
 
   render();
   $('.filters').hidden = false;

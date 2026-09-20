@@ -337,6 +337,27 @@ button svg, .search > svg {
 .dialog-content { min-height: 0; padding: 0 var(--dialog-padding) var(--dialog-padding); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 .detail-art { --radius-card: 16px; }
 .detail-art .card-art { aspect-ratio: var(--card-ratio); max-height: calc(var(--dialog-viewport-height, 100dvh) * 0.6); background: var(--surface-stage); box-shadow: inset 0 0 0 1px var(--border); }
+.detail-visual { position: relative; }
+.detail-visual.has-viewer .detail-art { position: absolute; inset: 0; }
+.detail-visual.has-viewer .detail-art .card-art { height: 100%; max-height: none; aspect-ratio: auto; }
+.card-viewer-stage {
+  width: 100%;
+  height: clamp(240px, 52dvh, 440px);
+  overflow: hidden;
+  border-radius: var(--radius-stage);
+  background: var(--surface-stage);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.card-viewer-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.card-viewer-canvas:active { cursor: grabbing; }
+.card-viewer-canvas:focus-visible { outline-offset: -4px; }
+.viewer-status { position: absolute; left: 12px; right: 12px; bottom: 8px; margin: 0; padding: 6px 10px; border-radius: var(--radius-control); color: var(--muted); background: var(--surface-panel); text-align: center; font-size: 14px; pointer-events: none; }
+.viewer-controls { margin-top: 12px; }
+.viewer-toolbar, .viewer-finishes, .viewer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.viewer-toolbar { justify-content: space-between; }
+.viewer-toolbar button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-panel); font-size: 14px; }
+.viewer-toolbar button[aria-pressed="true"] { border-color: var(--border-active); color: var(--brand-strong); background: var(--soft); }
+.viewer-help { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
 .detail-information { margin-top: 16px; }
 .detail-information h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
 .detail-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 8px; color: var(--muted); font-size: 14px; }
