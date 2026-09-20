@@ -7,6 +7,9 @@ const FINISHES = {
   iridescent: { roughness: .24, metalness: .55, specularIntensity: 1, clearcoat: .25, clearcoatRoughness: .12, iridescence: 1, envMapIntensity: 1.35 },
 };
 
+// Keep recently viewed GPU textures without growing with the whole collection.
+const TEXTURE_CACHE_BYTES = 96 * 1024 * 1024;
+
 function roundedRectangle(width, height, radius) {
   const shape = new THREE.Shape();
   const x = -width / 2, y = -height / 2;
@@ -27,13 +30,17 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
   if (!Object.hasOwn(FINISHES, finish)) throw new RangeError('未知卡片材质');
   const resources = new Set();
   const own = resource => { resources.add(resource); return resource; };
-  let renderer, observer, canvas, animation = 0, disposed = false, drag = null, cardRequest = 0;
+  const textures = new Map();
+  const pendingTextures = new Map();
+  let textureBytes = 0;
+  let renderer, observer, canvas, animation = 0, disposed = false, drag = null, cardRequest = 0, requestedImage = null;
   const events = new AbortController();
 
   function dispose() {
     if (disposed) return;
     disposed = true;
     cardRequest++;
+    requestedImage = null;
     cancelAnimationFrame(animation);
     observer?.disconnect();
     events.abort();
@@ -41,6 +48,8 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     drag = null;
     for (const resource of resources) resource.dispose();
     resources.clear();
+    textures.clear();
+    pendingTextures.clear();
     renderer?.dispose();
     renderer?.forceContextLoss();
     canvas?.remove();
@@ -175,19 +184,49 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       render();
     }
     function stopAnimation() { cancelAnimationFrame(animation); animation = 0; }
+    function loadTexture(image) {
+      if (!pendingTextures.has(image)) {
+        const loading = new THREE.TextureLoader().loadAsync(image).then(texture => {
+          if (disposed) { texture.dispose(); return null; }
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          return texture;
+        }).finally(() => pendingTextures.delete(image));
+        pendingTextures.set(image, loading);
+      }
+      return pendingTextures.get(image);
+    }
+    function cacheTexture(image, texture) {
+      if (!textures.has(image)) {
+        own(texture);
+        textureBytes += texture.image.width * texture.image.height * 4 * 4 / 3;
+      }
+      textures.delete(image);
+      textures.set(image, texture);
+      // Always retain the current card, even if its texture alone exceeds the budget.
+      while (textureBytes > TEXTURE_CACHE_BYTES && textures.size > 1) {
+        const [oldImage, oldTexture] = textures.entries().next().value;
+        textures.delete(oldImage);
+        textureBytes -= oldTexture.image.width * oldTexture.image.height * 4 * 4 / 3;
+        oldTexture.dispose();
+        resources.delete(oldTexture);
+      }
+    }
     // Geometry is shared for the lifetime of this viewer; cards only replace its texture.
     async function setCard({ image, name, textureCorners }) {
       if (disposed) return false;
       const request = ++cardRequest;
-      let texture;
+      requestedImage = image;
+      let texture = textures.get(image);
       try {
-        texture = await new THREE.TextureLoader().loadAsync(image);
+        if (!texture) texture = await loadTexture(image);
       } catch (error) {
         if (disposed || request !== cardRequest) return false;
         throw error;
       }
       if (disposed || request !== cardRequest) {
-        texture.dispose();
+        // A concurrent reopen may still be using the same pending image.
+        if (texture && !resources.has(texture) && requestedImage !== image) texture.dispose();
         return false;
       }
       let mapping;
@@ -198,18 +237,15 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
           textureCorners,
         });
       } catch (error) {
-        texture.dispose();
+        if (!resources.has(texture)) texture.dispose();
         throw error;
       }
       textureProjection.set(...mapping.projection);
       card.rotation.z = mapping.portrait ? Math.PI / 2 : 0;
       card.visible = true;
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      const previous = frontMaterial.map;
-      frontMaterial.map = own(texture);
-      frontMaterial.needsUpdate = true;
-      if (previous) { previous.dispose(); resources.delete(previous); }
+      if (!frontMaterial.map) frontMaterial.needsUpdate = true;
+      frontMaterial.map = texture;
+      cacheTexture(image, texture);
       canvas.setAttribute('aria-label', `${name || '银行卡'}的三维预览。拖动或使用方向键环绕查看，Home 键复位。`);
       render();
       return true;
@@ -217,16 +253,13 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     function clearCard() {
       if (disposed) return;
       cardRequest++;
+      requestedImage = null;
       stopAnimation();
       orbit.copy(initialOrbit);
       card.rotation.z = 0;
       card.visible = false;
       if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
       drag = null;
-      const previous = frontMaterial.map;
-      frontMaterial.map = null;
-      frontMaterial.needsUpdate = true;
-      if (previous) { previous.dispose(); resources.delete(previous); }
       canvas.setAttribute('aria-label', '银行卡的三维预览。拖动或使用方向键环绕查看，Home 键复位。');
       render();
     }

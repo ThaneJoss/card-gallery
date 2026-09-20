@@ -54,6 +54,7 @@ function observe(page) {
 }
 async function openCard(page, id) {
   await page.locator(`button[data-card="${id}"]`).click();
+  assert.equal(await page.locator('#detail-viewer-status').isVisible(), false, '打开详情不应显示等待加载提示');
   await page.waitForFunction(() => document.querySelector('#detail-viewer')?.getAttribute('aria-busy') === 'false' && document.querySelector('#detail-viewer canvas'));
   await canvas(page).waitFor({ state: 'visible' });
   assert.equal(await canvas(page).count(), 1, '详情只能存在一个渲染画布');
@@ -95,12 +96,19 @@ try {
   await page.evaluate(() => {
     const canvas = document.querySelector('#detail-viewer canvas');
     const context = canvas.getContext('webgl2');
-    window.__viewerRegression = { canvas, context, geometryUploads: 0 };
+    window.__viewerRegression = { canvas, context, geometryUploads: 0, textureUploads: 0, shaderCompiles: 0 };
     const bufferData = context.bufferData;
     context.bufferData = function(target, ...args) {
       if (target === context.ARRAY_BUFFER) window.__viewerRegression.geometryUploads += 1;
       return bufferData.call(this, target, ...args);
     };
+    for (const name of ['texImage2D', 'texSubImage2D', 'compileShader']) {
+      const original = context[name];
+      context[name] = function(...args) {
+        window.__viewerRegression[name === 'compileShader' ? 'shaderCompiles' : 'textureUploads'] += 1;
+        return original.apply(this, args);
+      };
+    }
   });
   const assertSharedRenderer = async () => {
     assert.ok(await page.evaluate(() => {
@@ -157,24 +165,38 @@ try {
   await assertSharedRenderer();
   await snapshot(page, 'photo-texture');
   await closeCard(page, 'cmb-koi-debit');
+  const beforeReopen = await page.evaluate(() => ({
+    textureUploads: window.__viewerRegression.textureUploads,
+    shaderCompiles: window.__viewerRegression.shaderCompiles,
+  }));
   await openCard(page, horizontal.id);
   await assertSharedRenderer();
   assert.equal(await difference(front, await snapshot(page, 'reopened')), 0, '重新打开应恢复对应卡片默认画面');
   await closeCard(page, horizontal.id);
+  await openCard(page, horizontal.id);
+  await closeCard(page, horizontal.id);
+  const afterReopen = await page.evaluate(() => ({
+    textureUploads: window.__viewerRegression.textureUploads,
+    shaderCompiles: window.__viewerRegression.shaderCompiles,
+  }));
+  assert.deepEqual(afterReopen, beforeReopen, '已看过的卡片再次打开不得重新上传贴图或编译着色器');
 
   // Hold the old card's image response while a newer selection becomes ready.
+  const uncached = cards.find(card => ![horizontal.id, vertical.id, otherHorizontal.id, 'cmb-koi-debit'].includes(card.id));
   let releaseImage;
   const imageGate = new Promise(resolve => { releaseImage = resolve; });
-  const oldImageURL = new URL(horizontal.image, origin + '/').href;
+  const oldImageURL = new URL(uncached.image, origin + '/').href;
   const pendingImage = page.waitForRequest(oldImageURL);
   await page.route(oldImageURL, async route => {
     await imageGate;
     await route.continue();
   });
-  await page.locator(`button[data-card="${horizontal.id}"]`).click();
+  await page.locator(`button[data-card="${uncached.id}"]`).click();
   await pendingImage;
   assert.equal(await page.locator('#detail-viewer').getAttribute('aria-busy'), 'true', '旧卡应仍在加载');
-  await closeCard(page, horizontal.id);
+  assert.equal(await page.locator('#detail-viewer-status').isVisible(), false, '慢速加载也不弹等待提示');
+  assert.equal(await page.locator('#detail-art').isVisible(), true, '加载时保留可立即浏览的卡面');
+  await closeCard(page, uncached.id);
   await openCard(page, vertical.id);
   await assertSharedRenderer();
   const latestCard = await snapshot(page, 'race-latest-card');
