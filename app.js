@@ -253,7 +253,10 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     ? `<img class="bank-logo" data-bank-logo src="${escapeHTML(bankLogos.get(bank))}" alt="${escapeHTML(bank)}" title="${escapeHTML(bank)}" draggable="false">`
     : fallbackBankLogo(bank);
   const pickerOptions = {
-    bank:[{value:'all',label:'全部银行'}, ...bankNames.map(bank => ({value:bank,label:bank,logo:bankLogos.get(bank)}))],
+    bank:[{value:'all',label:'全部银行'}, ...bankGroups.flatMap(group => [
+      {value:`region:${group.id}`,label:`全部${group.label}`},
+      ...group.banks.map(bank => ({value:bank,label:bank,logo:bankLogos.get(bank)}))
+    ])],
     network:[{value:'all',label:'全部卡组织'}, ...networkOptions.map(item => ({...item,logo:`./assets/logos/networks/${item.value}.svg`}))]
   };
   const optionIcon = (kind, option) => option.logo ? `<img src="${escapeHTML(option.logo)}" data-option-icon="${kind}" alt="" draggable="false">` : genericIcons[kind];
@@ -335,7 +338,7 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     const trigger = $(`#${kind}-trigger`);
     const optionMarkup = new Map(pickerOptions[kind].map((option,index) => [option.value, `<button class="picker-option" type="button" role="option" id="${kind}-option-${index}" data-value="${escapeHTML(option.value)}" aria-selected="false" tabindex="-1"><span class="option-icon" aria-hidden="true">${optionIcon(kind,option)}</span><span class="option-label">${escapeHTML(option.label)}</span><svg class="option-check" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg></button>`]));
     menu.innerHTML = kind === 'bank'
-      ? `${optionMarkup.get('all')}<div class="picker-columns" role="presentation">${bankGroups.map(group => `<div class="picker-group" role="group" aria-labelledby="bank-group-${group.id}"><div class="picker-group-title" id="bank-group-${group.id}">${group.label}</div><div class="picker-group-options" role="presentation">${group.banks.map(bank => optionMarkup.get(bank)).join('')}</div></div>`).join('')}</div>`
+      ? `${optionMarkup.get('all')}<div class="picker-columns" role="presentation">${bankGroups.map(group => `<div class="picker-group" role="group" aria-labelledby="bank-group-${group.id}"><div class="picker-group-title" id="bank-group-${group.id}">${group.label}</div>${optionMarkup.get(`region:${group.id}`)}<div class="picker-group-options" role="presentation">${group.banks.map(bank => optionMarkup.get(bank)).join('')}</div></div>`).join('')}</div>`
       : [...optionMarkup.values()].join('');
     trigger.addEventListener('click', () => activePicker === kind ? closePicker(true) : openPicker(kind));
     trigger.addEventListener('keydown', event => {
@@ -381,12 +384,13 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   $('#count-credit').textContent = cards.filter(card => card.type === 'credit').length;
 
   function matches(card, filters = state) {
+    const bankGroup = bankGroups.find(group => filters.bank === `region:${group.id}`);
     const words = filters.query.normalize('NFKC').trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
     const networkNames = card.networks.map(network => pickerOptions.network.find(option => option.value === network).label);
     const typeNames = card.type === 'debit' ? 'debit 储蓄卡 借记卡' : 'credit 信用卡';
     const haystack = [card.name, card.bank, typeNames, ...card.networks, ...networkNames].join(' ').normalize('NFKC').toLocaleLowerCase();
     return (filters.type === 'all' || card.type === filters.type)
-      && (filters.bank === 'all' || card.bank === filters.bank)
+      && (bankGroup ? bankGroup.banks.includes(card.bank) : filters.bank === 'all' || card.bank === filters.bank)
       && (filters.network === 'all' || card.networks.includes(filters.network))
       && words.every(word => haystack.includes(word));
   }
@@ -547,7 +551,7 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     const lifecycle = new AbortController();
     const types = ['all', 'debit', 'credit'];
     const networks = ['all', ...supportedNetworks];
-    const banks = ['all', ...bankNames];
+    const banks = pickerOptions.bank.map(option => option.value);
     const tool = {
       name: 'filter_card_gallery',
       title: '筛选卡片画廊',
@@ -557,7 +561,7 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
         properties: {
           query: { type: 'string', maxLength: 200, description: 'Card name, bank, card type, or payment network, such as 中国银行 or Visa.' },
           type: { type: 'string', enum: types },
-          bank: { type: 'string', enum: banks },
+          bank: { type: 'string', enum: banks, description: 'Bank name, all, region:mainland for all mainland banks, or region:hong-kong for all Hong Kong banks.' },
           network: { type: 'string', enum: networks }
         },
         additionalProperties: false

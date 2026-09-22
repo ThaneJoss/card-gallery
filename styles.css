@@ -252,6 +252,7 @@ button svg, .search > svg {
 .picker-group-title { padding: 6px 12px 8px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .picker-group-options { min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; overscroll-behavior: contain; }
 .picker-group .picker-option { position: relative; gap: 8px; padding-right: 32px; }
+.picker-group > .picker-option { flex-shrink: 0; margin-bottom: 4px; font-weight: 600; }
 .picker-group .option-check { position: absolute; right: 10px; }
 .results-note { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 16px; color: var(--muted); font-size: 14px; }
 .results-note p { min-width: 0; margin: 0; overflow-wrap: anywhere; }
