@@ -136,7 +136,7 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
         'vec4 sampledDiffuseColor = texture2D( map, vMapUv );',
         `vec3 cardUv = cardTextureProjection * vec3( vMapUv, 1.0 );
         vec4 sampledDiffuseColor = texture2D( map, cardUv.xy / cardUv.z );
-        // Filter in the image's sRGB space, like the DOM poster, then decode for lighting.
+        // Filter in the image's sRGB space, then decode for lighting.
         sampledDiffuseColor.rgb = mix(
           pow((sampledDiffuseColor.rgb + vec3(0.055)) / 1.055, vec3(2.4)),
           sampledDiffuseColor.rgb / 12.92,
