@@ -23,12 +23,20 @@ export async function buildSite({ root = projectRoot, log = console.log } = {}) 
   await rm(output, { recursive: true, force: true });
   await mkdir(resolve(output, 'cards'), { recursive: true });
   try {
-    for (const file of ['index.html', 'app.js', 'styles.css', '.nojekyll', 'assets/card-mark.svg', 'assets/logos']) {
+    for (const file of ['index.html', 'styles.css', '.nojekyll', 'assets/card-mark.svg', 'assets/logos']) {
       const destination = resolve(output, file);
       await mkdir(dirname(destination), { recursive: true });
       await cp(resolve(root, file), destination, { recursive: true });
     }
 
+    await bundle({
+      entryPoints: [resolve(root, 'app.js')],
+      outfile: resolve(output, 'app.js'),
+      bundle: true,
+      minify: true,
+      format: 'iife',
+      target: ['es2022']
+    });
     await bundle({
       entryPoints: [resolve(root, 'src/card-viewer.js')],
       outfile: resolve(output, 'card-viewer.js'),
@@ -52,15 +60,15 @@ export async function buildSite({ root = projectRoot, log = console.log } = {}) 
         const imagePath = `./cards/${position + 1}.webp`;
         try {
           const input = await readImage(card.image.trim(), root);
-          await sharp(input)
+          const dimensions = await sharp(input)
             .rotate()
             .resize({ width: 1600, withoutEnlargement: true })
             .webp({ quality: 85 })
             .toFile(resolve(output, imagePath));
+          builtCards[position] = { ...card, image: imagePath, imageWidth: dimensions.width, imageHeight: dimensions.height };
         } catch (error) {
           throw new Error(`卡片「${card.id}」处理失败：${error.message}`, { cause: error });
         }
-        builtCards[position] = { ...card, image: imagePath };
         log(`已处理 ${card.id} → ${imagePath}`);
       }));
       const failure = results.find(result => result.status === 'rejected');

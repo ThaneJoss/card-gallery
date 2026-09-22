@@ -74,6 +74,8 @@ test('远程 PNG/JPEG 与重定向可生成独立站点，源码不变，图片�
     assert.equal(Object.hasOwn(item, 'keywords'), false);
     assert.match(item.image, /^\.\/cards\/\d+\.webp$/);
     const metadata = await sharp(resolve(root, 'public', item.image)).metadata();
+    assert.equal(item.imageWidth, metadata.width);
+    assert.equal(item.imageHeight, metadata.height);
     assert.equal(metadata.format, 'webp');
     if (item.id === 'png') {
       assert.equal(metadata.width, 1600);

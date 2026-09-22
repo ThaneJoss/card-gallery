@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createCardTextureMapping } from './card-texture.mjs';
+import { CARD_SHAPE, fitCardFace } from './card-presentation.mjs';
 
 const FINISHES = {
   matte: { roughness: .95, metalness: 0, specularIntensity: .12, clearcoat: 0, clearcoatRoughness: 1, iridescence: 0, envMapIntensity: .85 },
@@ -33,8 +34,7 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
   const textures = new Map();
   const pendingTextures = new Map();
   let textureBytes = 0;
-  let renderer, observer, canvas, animation = 0, disposed = false, drag = null, cardRequest = 0, requestedImage = null;
-  const events = new AbortController();
+  let renderer, observer, canvas, animation = 0, disposed = false, cardRequest = 0, requestedImage = null;
 
   function dispose() {
     if (disposed) return;
@@ -43,9 +43,6 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     requestedImage = null;
     cancelAnimationFrame(animation);
     observer?.disconnect();
-    events.abort();
-    if (drag && canvas?.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
-    drag = null;
     for (const resource of resources) resource.dispose();
     resources.clear();
     textures.clear();
@@ -56,7 +53,7 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
   }
 
   try {
-    const width = 8.53, height = 5.4, corner = .28;
+    const { width, height, corner, faceZ } = CARD_SHAPE;
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -64,8 +61,7 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     renderer.toneMappingExposure = 1.05;
     canvas = renderer.domElement;
     canvas.className = 'card-viewer-canvas';
-    canvas.tabIndex = 0;
-    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-hidden', 'true');
     canvas.setAttribute('aria-label', '银行卡的三维预览。拖动或使用方向键环绕查看，Home 键复位。');
     canvas.style.touchAction = 'none';
     canvas.style.display = 'block';
@@ -76,10 +72,14 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     const card = new THREE.Group();
     card.visible = false;
     scene.add(card);
-    const initialOrbit = new THREE.Quaternion().setFromEuler(new THREE.Euler(-.17, -.35, .025)).invert();
+    const initialOrbit = new THREE.Quaternion();
     const orbit = initialOrbit.clone();
     const turn = new THREE.Quaternion(), axis = new THREE.Vector3();
-    let radius = 17;
+    let portrait = false;
+    const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const inverseOrbit = new THREE.Quaternion(), projectedPoint = new THREE.Vector3();
+    const bounds = [];
+    for (const x of [-width / 2, width / 2]) for (const y of [-height / 2, height / 2]) for (const z of [-faceZ, faceZ]) bounds.push(new THREE.Vector3(x, y, z));
 
     // The studio and card remain fixed; only the camera orbits.
     const environment = new THREE.Scene();
@@ -164,22 +164,30 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
 
     function render() {
       if (disposed) return;
+      const w = container.clientWidth, h = container.clientHeight;
+      if (!w || !h) return;
+      const frame = fitCardFace(w, h, portrait);
+      let radius = faceZ + h / (2 * tangent * frame.scale);
+      inverseOrbit.copy(orbit).invert();
+      // Start exactly behind the poster; back away only when rotation needs more room.
+      for (const point of bounds) {
+        projectedPoint.copy(point).applyQuaternion(card.quaternion).applyQuaternion(inverseOrbit);
+        radius = Math.max(radius, projectedPoint.z + Math.abs(projectedPoint.x) * h / (tangent * (w - 48)),
+          projectedPoint.z + Math.abs(projectedPoint.y) * h / (tangent * (h - 48)));
+      }
       camera.position.set(0, 0, radius).applyQuaternion(orbit);
       camera.quaternion.copy(orbit);
       camera.up.set(0, 1, 0).applyQuaternion(orbit);
+      camera.far = Math.max(100, radius + Math.hypot(width, height));
+      camera.updateProjectionMatrix();
       renderer.render(scene, camera);
     }
-    const boundingRadius = Math.hypot(width / 2 + .025, height / 2 + .025, .061);
     function resize() {
       if (disposed) return;
       const w = container.clientWidth, h = container.clientHeight;
       if (!w || !h) return;
       renderer.setSize(w, h);
       camera.aspect = w / h;
-      const verticalHalfFov = THREE.MathUtils.degToRad(camera.fov / 2);
-      const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
-      radius = boundingRadius * 1.04 / Math.sin(Math.min(verticalHalfFov, horizontalHalfFov));
-      camera.far = Math.max(100, radius + boundingRadius * 2);
       camera.updateProjectionMatrix();
       render();
     }
@@ -241,7 +249,8 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
         throw error;
       }
       textureProjection.set(...mapping.projection);
-      card.rotation.z = mapping.portrait ? Math.PI / 2 : 0;
+      portrait = mapping.portrait;
+      card.rotation.z = portrait ? Math.PI / 2 : 0;
       card.visible = true;
       if (!frontMaterial.map) frontMaterial.needsUpdate = true;
       frontMaterial.map = texture;
@@ -258,8 +267,6 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       orbit.copy(initialOrbit);
       card.rotation.z = 0;
       card.visible = false;
-      if (drag && canvas.hasPointerCapture(drag.id)) canvas.releasePointerCapture(drag.id);
-      drag = null;
       canvas.setAttribute('aria-label', '银行卡的三维预览。拖动或使用方向键环绕查看，Home 键复位。');
       render();
     }
@@ -296,45 +303,21 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       else step(start);
     }
 
-    const eventOptions = { signal: events.signal };
-    canvas.addEventListener('pointerdown', event => {
-      if (drag || event.button !== 0) return;
+    function rotate(rotations) {
+      if (disposed) return;
       stopAnimation();
-      canvas.focus({ preventScroll: true });
-      drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
-      canvas.setPointerCapture(event.pointerId);
-    }, eventOptions);
-    canvas.addEventListener('pointermove', event => {
-      if (!drag || event.pointerId !== drag.id) return;
-      const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
-      drag.x = event.clientX;
-      drag.y = event.clientY;
-      const distance = Math.hypot(dx, dy);
-      if (!distance) return;
-      axis.set(-dy, -dx, 0).normalize();
-      turn.setFromAxisAngle(axis, distance * Math.PI / Math.min(container.clientWidth, container.clientHeight));
-      orbit.multiply(turn).normalize();
+      for (const { x, y, angle } of rotations) {
+        axis.set(x, y, 0).normalize();
+        turn.setFromAxisAngle(axis, angle);
+        orbit.multiply(turn).normalize();
+      }
       render();
-    }, eventOptions);
-    function finishDrag(event) { if (drag?.id === event.pointerId) drag = null; }
-    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(type, finishDrag, eventOptions);
-    canvas.addEventListener('keydown', event => {
-      if (event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.key === 'Home') { event.preventDefault(); resetView(); return; }
-      const axes = { ArrowLeft: [0, 1, 0], ArrowRight: [0, -1, 0], ArrowUp: [1, 0, 0], ArrowDown: [-1, 0, 0] };
-      if (!Object.hasOwn(axes, event.key)) return;
-      event.preventDefault();
-      stopAnimation();
-      axis.fromArray(axes[event.key]);
-      turn.setFromAxisAngle(axis, Math.PI / 12);
-      orbit.multiply(turn).normalize();
-      render();
-    }, eventOptions);
+    }
 
     observer = new ResizeObserver(resize);
     observer.observe(container);
     resize();
-    return { setCard, clearCard, setFinish, flip, resetView, dispose };
+    return { setCard, clearCard, setFinish, flip, resetView, rotate, dispose };
   } catch (error) {
     dispose();
     throw error;
