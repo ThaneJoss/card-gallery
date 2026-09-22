@@ -2,6 +2,41 @@
   "verified_on": "2026-09-15",
   "assets": [
     {
+      "name": "香港中银",
+      "file": "banks/boc.svg",
+      "source_url": "https://www.boc.cn/invester/ir3/200812/P020081207571252517453.pdf",
+      "source_page_url": "https://www.bochk.com/tc/home.html",
+      "method": "复用已收录的中银独立矢量标志。"
+    },
+    {
+      "name": "香港汇丰",
+      "file": "banks/hsbc.svg",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/images/hongkong-hsbc-logo-en.svg",
+      "source_page_url": "https://www.hsbc.com.hk/",
+      "method": "保留官网 SVG 中六角标志的原始几何与颜色，移除文字及隐藏图层。"
+    },
+    {
+      "name": "香港众安",
+      "file": "banks/za.svg",
+      "source_url": "https://cdn.zaticdn.com/if/ipage/prd/project/zati-header/assets/image/logo-40.svg",
+      "source_page_url": "https://bank.za.group/",
+      "method": "官网页首原始 SVG 标志。"
+    },
+    {
+      "name": "香港汇立",
+      "file": "banks/welab.png",
+      "source_url": "https://www.welab.bank/favicon.png",
+      "source_page_url": "https://www.welab.bank/en/",
+      "method": "官网原始品牌图标文件。"
+    },
+    {
+      "name": "香港大象",
+      "file": "banks/elebank.svg",
+      "source_url": "https://foss-hk.elebank.com/airstarbank_fmp/prod/common_space/d4a9471a4b71f02f9556221da331fa5e_1774420226356_c8dec6_logo.svg",
+      "source_page_url": "https://www.elebank.com/zh-hk/card",
+      "method": "官网原始 SVG 品牌图标文件。"
+    },
+    {
       "name": "中国银行",
       "file": "banks/boc.svg",
       "source_url": "https://www.boc.cn/invester/ir3/200812/P020081207571252517453.pdf",
