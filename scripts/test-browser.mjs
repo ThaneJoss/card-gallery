@@ -51,6 +51,30 @@ async function largestPixelDifference(a, b) {
   assert.equal(first.length, second.length);
   return first.reduce((largest, value, i) => Math.max(largest, Math.abs(value - second[i])), 0);
 }
+async function assertOriginalColor(page, poster, rendered) {
+  const visual = await page.locator('#detail-visual').boundingBox();
+  const bounds = await page.locator('.detail-poster').boundingBox();
+  const inset = Math.ceil(await page.locator('.detail-poster').evaluate(element => parseFloat(getComputedStyle(element).borderRadius))) + 3;
+  const interior = { left: Math.ceil(bounds.x - Math.floor(visual.x)) + inset,
+    top: Math.ceil(bounds.y - Math.floor(visual.y)) + inset,
+    width: Math.floor(bounds.width) - inset * 2, height: Math.floor(bounds.height) - inset * 2 };
+  // Compare color over small neighborhoods, excluding rounded borders and subpixel resampling.
+  // Keep channel bias separate so a global tint cannot hide behind detailed artwork.
+  const expected = await sharp(poster).extract(interior).removeAlpha().blur(3).raw().toBuffer();
+  const actual = await sharp(rendered).extract(interior).removeAlpha().blur(3).raw().toBuffer();
+  assert.equal(actual.length, expected.length);
+  let error = 0;
+  const bias = [0, 0, 0];
+  for (let i = 0; i < expected.length; i++) {
+    const delta = actual[i] - expected[i];
+    error += Math.abs(delta);
+    bias[i % 3] += delta;
+  }
+  const meanError = error / expected.length;
+  const channelBias = bias.map(value => Math.abs(value) / (expected.length / 3));
+  assert.ok(meanError < 3 && channelBias.every(value => value < 2),
+    `默认原色进入3D不得产生明显色差：平均误差=${meanError.toFixed(3)}，通道偏移=${channelBias.map(value => value.toFixed(3))}`);
+}
 function observe(page) {
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -60,10 +84,12 @@ async function openCard(page, id) {
   await page.locator(`button[data-card="${id}"]`).click();
   assert.equal(await page.locator('#detail-viewer-status').isVisible(), false, '打开详情不应显示等待加载提示');
   await page.waitForFunction(() => document.querySelector('#detail-viewer')?.getAttribute('aria-busy') === 'false' && document.querySelector('#detail-viewer canvas'));
+  await page.locator('#detail-art img').evaluate(image => image.decode());
   await canvas(page).waitFor({ state: 'visible' });
   assert.equal(await canvas(page).count(), 1, '详情只能存在一个渲染画布');
   assert.equal(await page.locator('#detail-art').isVisible(), true, '未交互时3D就绪也必须保留大图');
   assert.equal(await page.locator('#detail-visual').evaluate(element => element.classList.contains('is-interactive')), false);
+  assert.equal(await page.locator('[data-finish="original"]').getAttribute('aria-pressed'), 'true', '每次开卡应默认使用原色');
 }
 async function closeCard(page, id, escape = true) {
   if (escape) await page.keyboard.press('Escape');
@@ -101,7 +127,7 @@ try {
   assert.ok(vertical?.height > vertical?.width && otherHorizontal, '回归数据须包含真正的竖版卡及第二张横版卡');
   assert.ok(horizontal && vertical, '回归数据须包含横卡和竖卡');
   await page.locator(`button[data-card="${horizontal.id}"]`).click();
-  await page.waitForFunction(() => document.querySelector('#detail-art img')?.complete);
+  await page.locator('#detail-art img').evaluate(image => image.decode());
   const beforeReady = await snapshot(page, 'poster-before-ready');
   const posterBounds = await page.locator('.detail-poster').boundingBox();
   assert.equal(await page.locator('#detail-viewer-status').isVisible(), false);
@@ -114,6 +140,7 @@ try {
   assert.deepEqual(await page.locator('.detail-poster').boundingBox(), posterBounds, '加载完成不能挪动大图或撑高弹窗');
   const assertPosterRestored = async name => {
     assert.equal(await page.locator('#detail-art').isVisible(), true);
+    assert.equal(await page.locator('[data-finish="original"]').getAttribute('aria-pressed'), 'true', '复位应恢复无滤镜原色');
     assert.deepEqual(await page.locator('.detail-poster').boundingBox(), posterBounds, '大图位置和尺寸必须保持不变');
     const visual = await page.locator('#detail-visual').boundingBox();
     const corner = Math.ceil(await page.locator('.detail-poster').evaluate(element => parseFloat(getComputedStyle(element).borderRadius))) + 2;
@@ -154,10 +181,22 @@ try {
     }), '换卡和重新打开必须复用同一个canvas及WebGL context');
     assert.equal(await page.evaluate(() => window.__viewerRegression.geometryUploads), 0, '换卡只能更新纹理或姿态，不得重新上传模型顶点缓冲');
   };
-  const front = await finishes(page, 'front');
+  assert.equal(await page.locator('[data-finish="original"]').getAttribute('aria-pressed'), 'true', '首次加载应默认无滤镜');
+  await stage(page).click();
+  const originalFront = await snapshot(page, 'front-original');
+  await assertOriginalColor(page, poster, originalFront);
+  for (const finish of ['matte', 'gloss', 'iridescent']) {
+    await page.locator(`[data-finish="${finish}"]`).click();
+    assert.ok(await difference(originalFront, await snapshot(page, `original-to-${finish}`)) > 0, `${finish}应是可主动启用的材质效果`);
+    await page.locator('[data-finish="original"]').click();
+    assert.equal(await page.locator('[data-finish="original"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await difference(originalFront, await snapshot(page, `${finish}-to-original`)), 0, '切回原色应完整移除材质效果');
+  }
+  const matteFront = await finishes(page, 'front');
+  const front = originalFront;
   await page.locator('#viewer-flip').click();
   const back = await finishes(page, 'back');
-  assert.ok(await difference(front, back) > 0, '翻面按钮应显示不同的背面');
+  assert.ok(await difference(matteFront, back) > 0, '翻面按钮应显示不同的背面');
   await page.locator('#viewer-reset').click();
   await assertPosterRestored('reset');
   await stage(page).click();
@@ -182,6 +221,9 @@ try {
   assert.equal(await difference(front, await snapshot(page, 'full-pitch')), 0, '上下旋转整圈应回到初始画面而非卡在极点');
   await page.keyboard.press('ArrowRight');
   assert.ok(await difference(front, await snapshot(page, 'yaw-right')) > 0, '左右方向键应旋转相机');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await snapshot(page, 'yaw-45-natural-perspective');
   await page.keyboard.press('Home');
   await assertPosterRestored('home');
   const box = await canvas(page).boundingBox();
@@ -203,19 +245,23 @@ try {
   await openCard(page, vertical.id);
   await assertSharedRenderer();
   const portrait = await snapshot(page, 'portrait');
+  await stage(page).click();
+  await assertOriginalColor(page, portrait, await snapshot(page, 'portrait-original'));
   await snapshot(page, 'citic-visa-platinum-debit');
   assert.ok(await difference(front, portrait) > 0, '换卡后应显示新卡面');
   await closeCard(page, vertical.id, false);
   await openCard(page, otherHorizontal.id);
   await assertSharedRenderer();
-  await page.locator('[data-finish="matte"]').click();
   await page.locator('#viewer-reset').click();
+  await page.locator('[data-finish="matte"]').click();
   await page.locator('#viewer-flip').click();
   assert.equal(await difference(back, await snapshot(page, 'other-horizontal-back')), 0, '不同横版素材应共用固定模型几何和取景，纯色背面应完全一致');
   await closeCard(page, otherHorizontal.id, false);
   await openCard(page, 'cmb-koi-debit');
   await assertSharedRenderer();
-  await snapshot(page, 'photo-texture');
+  const photoPoster = await snapshot(page, 'photo-texture');
+  await stage(page).click();
+  await assertOriginalColor(page, photoPoster, await snapshot(page, 'photo-original'));
   await closeCard(page, 'cmb-koi-debit');
   const beforeReopen = await page.evaluate(() => ({
     textureUploads: window.__viewerRegression.textureUploads,
@@ -301,14 +347,15 @@ try {
   await stage(page).tap();
   await page.waitForFunction(() => document.querySelector('#detail-visual').classList.contains('is-interactive'));
   assert.equal(await page.evaluate(() => window.getSelection().toString()), '', '触摸卡面不能选中文字或图片');
-  for (const finish of ['matte', 'gloss', 'iridescent']) {
+  for (const finish of ['original', 'matte', 'gloss', 'iridescent']) {
     const button = page.locator(`[data-finish="${finish}"]`);
     await button.tap();
     assert.equal(await button.getAttribute('aria-pressed'), 'true', '触摸应切换材质');
     const bounds = await button.boundingBox();
     assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 320, '320px下材质按钮不能溢出');
   }
-  await page.locator('[data-finish="matte"]').tap();
+  await page.locator('[data-finish="original"]').tap();
+  assert.equal(await page.locator('[data-finish="original"]').getAttribute('aria-pressed'), 'true', '比较触摸旋转前后时必须使用相同原色材质');
   assert.ok(await difference(pendingTouch, await snapshot(page, 'touch-front')) > 1, '模型加载期间的拖动不能丢失');
   await page.locator('#detail-title').evaluate(element => { element.textContent = '超长中文卡片名称（全角括号）银行卡收藏三维展示测试'.repeat(3); });
   assert.ok(await page.locator('#card-dialog').evaluate(element => element.scrollWidth <= element.clientWidth), '长中文名称不能造成横向溢出');
