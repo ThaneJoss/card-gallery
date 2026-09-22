@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "cardId": "pab-ic-standard-debit-623058",
+  "hd": "assets/card-studio/pab-ic-standard-debit-623058/hd.webp",
+  "clean": "assets/card-studio/pab-ic-standard-debit-623058/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "中国平安标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.03229892336922103,
+        0.06626506024096386,
+        0.12982900569981,
+        0.11546184738955824
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.21975934135528816,
+        0.06626506024096386,
+        0.21279290690310323,
+        0.07630522088353414
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.22102596580113995,
+        0.14357429718875503,
+        0.1488283723875871,
+        0.03714859437751004
+      ]
+    },
+    {
+      "id": "debit",
+      "label": "DEBIT 文字",
+      "kind": "text",
+      "image": "layers/debit.png",
+      "box": [
+        0.7580747308423053,
+        0.10341365461847389,
+        0.07093096896770108,
+        0.0391566265060241
+      ]
+    },
+    {
+      "id": "contactless",
+      "label": "非接触标志",
+      "kind": "other",
+      "image": "layers/contactless.png",
+      "box": [
+        0.8682710576314123,
+        0.050200803212851405,
+        0.077897403419886,
+        0.14759036144578314
+      ]
+    },
+    {
+      "id": "brand-large",
+      "label": "平安底纹文字",
+      "kind": "text",
+      "image": "layers/brand-large.png",
+      "box": [
+        0.012032932235592146,
+        0.5592369477911646,
+        0.6649778340721976,
+        0.4367469879518072
+      ],
+      "mode": "orange-dark"
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7150094996833439,
+        0.6696787148594378,
+        0.26725775807473084,
+        0.29116465863453816
+      ]
+    }
+  ]
+}

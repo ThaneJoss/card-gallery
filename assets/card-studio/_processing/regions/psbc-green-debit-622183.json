@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "cardId": "psbc-green-debit-622183",
+  "hd": "assets/card-studio/psbc-green-debit-622183/hd.webp",
+  "clean": "assets/card-studio/psbc-green-debit-622183/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "邮储银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.056998100063331225,
+        0.07931726907630522,
+        0.1317289423685877,
+        0.18775100401606426
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.19316022799240026,
+        0.10341365461847389,
+        0.4236858771374288,
+        0.09036144578313253
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.18999366687777075,
+        0.19477911646586346,
+        0.42811906269791006,
+        0.04417670682730924
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "绿卡通借记卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.734008866371121,
+        0.11746987951807229,
+        0.2298923369221026,
+        0.055220883534136546
+      ]
+    },
+    {
+      "id": "debit",
+      "label": "DEBIT CARD 文字",
+      "kind": "text",
+      "image": "layers/debit.png",
+      "box": [
+        0.77897403419886,
+        0.1817269076305221,
+        0.13679544015199493,
+        0.04116465863453815
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7150094996833439,
+        0.6767068273092369,
+        0.26599113362887905,
+        0.2821285140562249
+      ]
+    }
+  ]
+}

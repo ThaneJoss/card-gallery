@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "cardId": "czb-business-debit-622309",
+  "hd": "assets/card-studio/czb-business-debit-622309/hd.webp",
+  "clean": "assets/card-studio/czb-business-debit-622309/clean.webp",
+  "regions": [
+    {
+      "id": "bank-english",
+      "label": "CZBANK 文字",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.039873417721518985,
+        0.08734939759036145,
+        0.26582278481012656,
+        0.08734939759036145
+      ]
+    },
+    {
+      "id": "bank-logo",
+      "label": "浙商银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.3037974683544304,
+        0.06626506024096386,
+        0.08417721518987342,
+        0.13353413654618473
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.389873417721519,
+        0.0853413654618474,
+        0.23924050632911392,
+        0.09136546184738956
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7151898734177216,
+        0.6767068273092369,
+        0.2670886075949367,
+        0.29116465863453816
+      ]
+    }
+  ]
+}

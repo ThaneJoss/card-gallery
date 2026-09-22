@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "cardId": "za-hk-visa-debit",
+  "hd": "assets/card-studio/za-hk-visa-debit/hd.webp",
+  "clean": "assets/card-studio/za-hk-visa-debit/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "众安银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.024739583333333332,
+        0.0412796697626419,
+        0.13411458333333334,
+        0.21052631578947367
+      ],
+      "shape": "circle"
+    },
+    {
+      "id": "visa-logo",
+      "label": "Visa 标志",
+      "kind": "logo",
+      "image": "layers/visa-logo.png",
+      "box": [
+        0.73828125,
+        0.8173374613003096,
+        0.23307291666666666,
+        0.13106295149638802
+      ],
+      "mode": "white"
+    }
+  ]
+}

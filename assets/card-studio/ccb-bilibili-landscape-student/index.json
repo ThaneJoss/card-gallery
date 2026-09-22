@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "cardId": "ccb-bilibili-landscape-student",
+  "status": "ready",
+  "width": 1581,
+  "height": 995,
+  "hd": "hd.webp",
+  "clean": "clean.webp",
+  "elements": [
+    {
+      "id": "bank-logo",
+      "label": "建设银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.06325110689437065,
+        0.08542713567839195,
+        0.08981657179000632,
+        0.13969849246231156
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.16002530044275776,
+        0.10251256281407035,
+        0.3497786211258697,
+        0.06733668341708543
+      ],
+      "text": "中国建设银行"
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.16318785578747627,
+        0.17185929648241205,
+        0.2998102466793169,
+        0.044221105527638194
+      ],
+      "text": "China Construction Bank"
+    },
+    {
+      "id": "gold",
+      "label": "金卡标识",
+      "kind": "text",
+      "image": "layers/gold.png",
+      "box": [
+        0.16129032258064516,
+        0.2241206030150754,
+        0.09108159392789374,
+        0.05226130653266332
+      ],
+      "text": "GOLD"
+    },
+    {
+      "id": "bilibili-logo",
+      "label": "bilibili 标志",
+      "kind": "logo",
+      "image": "layers/bilibili-logo.png",
+      "box": [
+        0.7767235926628716,
+        0.07939698492462312,
+        0.15812776723592664,
+        0.12261306532663317
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.10815939278937381,
+        0.33768844221105526,
+        0.13409234661606578,
+        0.16180904522613065
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "无界卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.06514864010120178,
+        0.8180904522613065,
+        0.18026565464895636,
+        0.11658291457286432
+      ],
+      "text": "无界卡"
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7147375079063883,
+        0.6753768844221105,
+        0.26628716002530045,
+        0.29346733668341707
+      ]
+    }
+  ],
+  "notes": [
+    "高清图和底图为生成式重建，补全区域并非原始真实图案。",
+    "透明层 RGB 来自完整高清图；局部差分结合人工区域与颜色约束估计 alpha，细边缘可能有背景残留。"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "cardId": "icbc-horse-success",
+  "hd": "assets/card-studio/icbc-horse-success/hd.webp",
+  "clean": "assets/card-studio/icbc-horse-success/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "ICBC 银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.035939470365699874,
+        0.06048387096774194,
+        0.2742749054224464,
+        0.15524193548387097
+      ],
+      "mode": "gold"
+    },
+    {
+      "id": "year-seal",
+      "label": "马年印章",
+      "kind": "text",
+      "image": "layers/year-seal.png",
+      "box": [
+        0.9060529634300126,
+        0.07862903225806452,
+        0.044136191677175286,
+        0.11895161290322581
+      ],
+      "mode": "gold"
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.10277427490542244,
+        0.3316532258064516,
+        0.13619167717528374,
+        0.16028225806451613
+      ],
+      "shape": "rounded"
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7332912988650694,
+        0.7046370967741935,
+        0.23203026481715006,
+        0.2368951612903226
+      ]
+    }
+  ]
+}

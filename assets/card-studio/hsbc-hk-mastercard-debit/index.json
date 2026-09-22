@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "cardId": "hsbc-hk-mastercard-debit",
+  "status": "ready",
+  "width": 1579,
+  "height": 996,
+  "hd": "hd.webp",
+  "clean": "clean.webp",
+  "elements": [
+    {
+      "id": "bank-logo",
+      "label": "汇丰银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.6060797973400887,
+        0.04317269076305221,
+        0.18999366687777075,
+        0.15963855421686746
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "HSBC 文字",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.7960734642178594,
+        0.08132530120481928,
+        0.15072830905636478,
+        0.08132530120481928
+      ]
+    },
+    {
+      "id": "world-debit",
+      "label": "World Debit 文字",
+      "kind": "text",
+      "image": "layers/world-debit.png",
+      "box": [
+        0.8340721975934136,
+        0.4246987951807229,
+        0.11272957568081064,
+        0.11546184738955824
+      ]
+    },
+    {
+      "id": "mastercard-logo",
+      "label": "万事达标志",
+      "kind": "logo",
+      "image": "layers/mastercard-logo.png",
+      "box": [
+        0.7498416719442685,
+        0.6837349397590361,
+        0.22102596580113995,
+        0.22690763052208834
+      ]
+    },
+    {
+      "id": "mastercard-text",
+      "label": "mastercard 文字",
+      "kind": "text",
+      "image": "layers/mastercard-text.png",
+      "box": [
+        0.7587080430652312,
+        0.9106425702811245,
+        0.2058264724509183,
+        0.05622489959839357
+      ]
+    }
+  ],
+  "notes": [
+    "高清图和底图为生成式重建，补全区域并非原始真实图案。",
+    "透明层 RGB 来自完整高清图；局部差分结合人工区域与颜色约束估计 alpha，细边缘可能有背景残留。"
+  ]
+}

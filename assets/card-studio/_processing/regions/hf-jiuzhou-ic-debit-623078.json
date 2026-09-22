@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "cardId": "hf-jiuzhou-ic-debit-623078",
+  "hd": "assets/card-studio/hf-jiuzhou-ic-debit-623078/hd.webp",
+  "clean": "assets/card-studio/hf-jiuzhou-ic-debit-623078/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "恒丰银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.0849740932642487,
+        0.07239263803680981,
+        0.1310880829015544,
+        0.16441717791411042
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.22020725388601037,
+        0.07730061349693251,
+        0.24093264248704663,
+        0.10797546012269939
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.22383419689119172,
+        0.18282208588957055,
+        0.23108808290155441,
+        0.05276073619631902
+      ]
+    },
+    {
+      "id": "debit",
+      "label": "借记卡文字",
+      "kind": "text",
+      "image": "layers/debit.png",
+      "box": [
+        0.7797927461139896,
+        0.0785276073619632,
+        0.1699481865284974,
+        0.150920245398773
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.0849740932642487,
+        0.2907975460122699,
+        0.17409326424870467,
+        0.23558282208588957
+      ]
+    },
+    {
+      "id": "quickpass",
+      "label": "闪付标志",
+      "kind": "logo",
+      "image": "layers/quickpass.png",
+      "box": [
+        0.7678756476683938,
+        0.34355828220858897,
+        0.17979274611398963,
+        0.1901840490797546
+      ]
+    },
+    {
+      "id": "card-number",
+      "label": "样卡卡号",
+      "kind": "text",
+      "image": "layers/card-number.png",
+      "box": [
+        0.08704663212435233,
+        0.5386503067484663,
+        0.8642487046632125,
+        0.11042944785276074
+      ]
+    },
+    {
+      "id": "valid-date",
+      "label": "有效期",
+      "kind": "text",
+      "image": "layers/valid-date.png",
+      "box": [
+        0.28186528497409324,
+        0.6748466257668712,
+        0.2922279792746114,
+        0.1312883435582822
+      ]
+    },
+    {
+      "id": "atm",
+      "label": "ATM 文字箭头",
+      "kind": "other",
+      "image": "layers/atm.png",
+      "box": [
+        0.0849740932642487,
+        0.8760736196319019,
+        0.1077720207253886,
+        0.06257668711656442
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7129533678756477,
+        0.6613496932515337,
+        0.2699481865284974,
+        0.3006134969325153
+      ]
+    }
+  ]
+}

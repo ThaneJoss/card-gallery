@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "cardId": "cmb-sunflower-mastercard-cny",
+  "status": "ready",
+  "width": 1589,
+  "height": 990,
+  "hd": "hd.webp",
+  "clean": "clean.webp",
+  "elements": [
+    {
+      "id": "bank-logo",
+      "label": "招商银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.040276903713027064,
+        0.03434343434343434,
+        0.08495909376966645,
+        0.1404040404040404
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.1302706104468219,
+        0.04040404040404041,
+        0.24103209565764633,
+        0.09393939393939393
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.1302706104468219,
+        0.1404040404040404,
+        0.23977344241661422,
+        0.03535353535353535
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "人民币结算说明",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.13215859030837004,
+        0.18282828282828284,
+        0.23914411579609818,
+        0.052525252525252523
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.10824417872876023,
+        0.32626262626262625,
+        0.13593455003146634,
+        0.1686868686868687
+      ]
+    },
+    {
+      "id": "mastercard-logo",
+      "label": "万事达标志",
+      "kind": "logo",
+      "image": "layers/mastercard-logo.png",
+      "box": [
+        0.7520453115166772,
+        0.7282828282828283,
+        0.22026431718061673,
+        0.2222222222222222
+      ]
+    }
+  ],
+  "notes": [
+    "高清图和底图为生成式重建，补全区域并非原始真实图案。",
+    "透明层 RGB 来自完整高清图；局部差分结合人工区域与颜色约束估计 alpha，细边缘可能有背景残留。"
+  ]
+}

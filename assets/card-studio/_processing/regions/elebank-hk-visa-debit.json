@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "cardId": "elebank-hk-visa-debit",
+  "hd": "assets/card-studio/elebank-hk-visa-debit/hd.webp",
+  "clean": "assets/card-studio/elebank-hk-visa-debit/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "大象银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.04116529449018366,
+        0.06526104417670683,
+        0.11082963901203294,
+        0.15863453815261044
+      ]
+    },
+    {
+      "id": "coin-text",
+      "label": "招財文字",
+      "kind": "text",
+      "image": "layers/coin-text.png",
+      "box": [
+        0.3660544648511716,
+        0.6817269076305221,
+        0.11209626345788473,
+        0.2961847389558233
+      ],
+      "mode": "dark"
+    },
+    {
+      "id": "visa-logo",
+      "label": "Visa 标志",
+      "kind": "logo",
+      "image": "layers/visa-logo.png",
+      "box": [
+        0.7390753641545282,
+        0.751004016064257,
+        0.2311589613679544,
+        0.13052208835341367
+      ],
+      "mode": "white"
+    },
+    {
+      "id": "platinum",
+      "label": "白金标识",
+      "kind": "text",
+      "image": "layers/platinum.png",
+      "box": [
+        0.8328055731475618,
+        0.891566265060241,
+        0.13869537682077265,
+        0.05421686746987952
+      ],
+      "mode": "white"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "cardId": "bocom-horse-new-year",
+  "hd": "assets/card-studio/bocom-horse-new-year/hd.webp",
+  "clean": "assets/card-studio/bocom-horse-new-year/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "交通银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.06016466117796074,
+        0.06827309236947791,
+        0.077897403419886,
+        0.12951807228915663
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.15769474350854973,
+        0.07329317269076305,
+        0.27675744141861935,
+        0.08734939759036145
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.14122862571247624,
+        0.1576305220883534,
+        0.3147561747941735,
+        0.03413654618473896
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "太平洋卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.16719442685243824,
+        0.19678714859437751,
+        0.2621912602913236,
+        0.04317269076305221
+      ]
+    },
+    {
+      "id": "contactless",
+      "label": "非接触标志",
+      "kind": "other",
+      "image": "layers/contactless.png",
+      "box": [
+        0.5959468017732742,
+        0.07329317269076305,
+        0.07726409119696011,
+        0.13855421686746988
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7327422419252692,
+        0.7048192771084337,
+        0.2292590246991767,
+        0.2319277108433735
+      ]
+    }
+  ]
+}

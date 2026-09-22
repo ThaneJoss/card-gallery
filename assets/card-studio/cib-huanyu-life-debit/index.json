@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "cardId": "cib-huanyu-life-debit",
+  "status": "ready",
+  "width": 1578,
+  "height": 996,
+  "hd": "hd.webp",
+  "clean": "clean.webp",
+  "elements": [
+    {
+      "id": "bank-logo",
+      "label": "兴业银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.046261089987325726,
+        0.07931726907630522,
+        0.10899873257287707,
+        0.11746987951807229
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.16096324461343473,
+        0.08032128514056225,
+        0.22370088719898606,
+        0.08634538152610442
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.16223067173637515,
+        0.1636546184738956,
+        0.2211660329531052,
+        0.03112449799196787
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "寰宇人生卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.16096324461343473,
+        0.21285140562248997,
+        0.1590621039290241,
+        0.04919678714859438
+      ]
+    },
+    {
+      "id": "contactless",
+      "label": "非接触标志",
+      "kind": "other",
+      "image": "layers/contactless.png",
+      "box": [
+        0.9011406844106464,
+        0.37248995983935745,
+        0.07731305449936629,
+        0.14457831325301204
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7332065906210393,
+        0.7048192771084337,
+        0.23130544993662863,
+        0.23293172690763053
+      ]
+    }
+  ],
+  "notes": [
+    "高清图和底图为生成式重建，补全区域并非原始真实图案。",
+    "透明层 RGB 来自完整高清图；局部差分结合人工区域与颜色约束估计 alpha，细边缘可能有背景残留。"
+  ]
+}

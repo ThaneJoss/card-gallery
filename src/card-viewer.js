@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createCardTextureMapping } from './card-texture.mjs';
 import { CARD_SHAPE, fitCardCamera } from './card-presentation.mjs';
+import { layerPlacement } from './card-studio.mjs';
 
 const FINISHES = {
   original: null,
@@ -35,13 +36,15 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
   const textures = new Map();
   const pendingTextures = new Map();
   let textureBytes = 0;
-  let renderer, observer, canvas, animation = 0, disposed = false, cardRequest = 0, requestedImage = null;
+  let renderer, observer, canvas, animation = 0, disposed = false, cardRequest = 0;
+  let requestedImages = new Set(), activeImages = new Set();
 
   function dispose() {
     if (disposed) return;
     disposed = true;
     cardRequest++;
-    requestedImage = null;
+    requestedImages.clear();
+    activeImages.clear();
     cancelAnimationFrame(animation);
     observer?.disconnect();
     for (const resource of resources) resource.dispose();
@@ -136,7 +139,7 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
         'vec4 sampledDiffuseColor = texture2D( map, vMapUv );',
         `vec3 cardUv = cardTextureProjection * vec3( vMapUv, 1.0 );
         vec4 sampledDiffuseColor = texture2D( map, cardUv.xy / cardUv.z );
-        // Filter in the image's sRGB space, like the DOM poster, then decode for lighting.
+        // Filter in the image's sRGB space, then decode for lighting.
         sampledDiffuseColor.rgb = mix(
           pow((sampledDiffuseColor.rgb + vec3(0.055)) / 1.055, vec3(2.4)),
           sampledDiffuseColor.rgb / 12.92,
@@ -158,6 +161,36 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
     back.rotation.y = Math.PI;
     back.position.z = -faceZ;
     card.add(back);
+
+    const layerRoot = new THREE.Group();
+    card.add(layerRoot);
+    const layerGeometry = own(new THREE.PlaneGeometry(1, 1));
+    const layerPool = [];
+    let currentLayers = [], layerBounds = [], layerSpacing = .55;
+
+    function layoutLayers() {
+      layerBounds = [];
+      currentLayers.forEach(({ mesh }, index) => {
+        mesh.position.z = faceZ + .004 + layerSpacing * (.3 + index * .12);
+        if (!mesh.visible) return;
+        for (const x of [-.5, .5]) for (const y of [-.5, .5]) {
+          layerBounds.push(new THREE.Vector3(mesh.position.x + x * mesh.scale.x,
+            mesh.position.y + y * mesh.scale.y, mesh.position.z).applyQuaternion(layerRoot.quaternion));
+        }
+      });
+    }
+    function setLayerSpacing(value) {
+      layerSpacing = Math.max(0, Math.min(1, value));
+      layoutLayers();
+      render();
+    }
+    function setLayerVisibility(id, visible) {
+      const layer = currentLayers.find(item => item.id === id);
+      if (!layer) return;
+      layer.mesh.visible = visible;
+      layoutLayers();
+      render();
+    }
 
     const filmSize = 128, filmPixels = new Uint8Array(filmSize * filmSize * 4);
     for (let y = 0; y < filmSize; y++) for (let x = 0; x < filmSize; x++) {
@@ -187,7 +220,7 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
       camera.zoom = 1;
       inverseOrbit.copy(orbit).invert();
       // Keep the viewing distance stable. Widen framing only to avoid clipping a rotated card.
-      for (const point of bounds) {
+      for (const point of [...bounds, ...layerBounds]) {
         projectedPoint.copy(point).applyQuaternion(card.quaternion).applyQuaternion(inverseOrbit);
         const depth = distance - projectedPoint.z;
         camera.zoom = Math.min(camera.zoom, depth * tangent * (w - 48) / (Math.abs(projectedPoint.x) * h),
@@ -213,9 +246,12 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
       if (!pendingTextures.has(image)) {
         const loading = new THREE.TextureLoader().loadAsync(image).then(texture => {
           if (disposed) { texture.dispose(); return null; }
-          // Keep encoded texels for DOM-matching filtering. Both face shaders decode after sampling.
+          // Both face shaders decode sRGB after filtering; layer maps opt into sRGB separately.
           texture.colorSpace = THREE.NoColorSpace;
           texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          // A base image can finish before its layers. Share it immediately with a newer view.
+          cacheTexture(image, texture);
+          trimTextureCache();
           return texture;
         }).finally(() => pendingTextures.delete(image));
         pendingTextures.set(image, loading);
@@ -229,9 +265,12 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
       }
       textures.delete(image);
       textures.set(image, texture);
-      // Always retain the current card, even if its texture alone exceeds the budget.
-      while (textureBytes > TEXTURE_CACHE_BYTES && textures.size > 1) {
-        const [oldImage, oldTexture] = textures.entries().next().value;
+    }
+    function trimTextureCache() {
+      // Retain every texture of the visible card, including its transparent layers.
+      for (const [oldImage, oldTexture] of textures) {
+        if (textureBytes <= TEXTURE_CACHE_BYTES) break;
+        if (activeImages.has(oldImage) || requestedImages.has(oldImage)) continue;
         textures.delete(oldImage);
         textureBytes -= oldTexture.image.width * oldTexture.image.height * 4 * 4 / 3;
         oldTexture.dispose();
@@ -239,22 +278,22 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
       }
     }
     // Geometry is shared for the lifetime of this viewer; cards only replace its texture.
-    async function setCard({ image, name, textureCorners }) {
+    async function setCard({ image, name, textureCorners, layers = [] }) {
       if (disposed) return false;
       const request = ++cardRequest;
-      requestedImage = image;
-      let texture = textures.get(image);
-      try {
-        if (!texture) texture = await loadTexture(image);
-      } catch (error) {
-        if (disposed || request !== cardRequest) return false;
-        throw error;
-      }
+      const images = [...new Set([image, ...layers.map(layer => layer.image)])];
+      requestedImages = new Set(images);
+      const loaded = await Promise.allSettled(images.map(url => textures.get(url) || loadTexture(url)));
       if (disposed || request !== cardRequest) {
-        // A concurrent reopen may still be using the same pending image.
-        if (texture && !resources.has(texture) && requestedImage !== image) texture.dispose();
         return false;
       }
+      const failure = loaded.find(result => result.status === 'rejected');
+      if (failure) {
+        requestedImages.clear();
+        trimTextureCache();
+        throw failure.reason;
+      }
+      const texture = loaded[0].value;
       let mapping;
       try {
         mapping = createCardTextureMapping({
@@ -263,18 +302,46 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
           textureCorners,
         });
       } catch (error) {
-        if (!resources.has(texture)) texture.dispose();
+        requestedImages.clear();
+        trimTextureCache();
         throw error;
       }
       textureProjection.set(...mapping.projection);
       portrait = mapping.portrait;
+      container.classList.toggle('is-portrait', portrait);
       card.rotation.z = portrait ? Math.PI / 2 : 0;
       card.visible = true;
       for (const material of [frontMaterial, originalFront]) {
         if (!material.map) material.needsUpdate = true;
         material.map = texture;
       }
-      cacheTexture(image, texture);
+      activeImages = new Set(images);
+      loaded.forEach((result, index) => cacheTexture(images[index], result.value));
+      layerRoot.rotation.z = portrait ? -Math.PI / 2 : 0;
+      layerPool.forEach(mesh => { mesh.visible = false; mesh.material.map = null; });
+      currentLayers = layers.map((layer, index) => {
+        if (!layerPool[index]) {
+          const material = own(new THREE.MeshBasicMaterial({ transparent: true, toneMapped: false,
+            depthWrite: false, alphaTest: .01 }));
+          const mesh = new THREE.Mesh(layerGeometry, material);
+          // Transparent objects are otherwise sorted by their centres: a tilted
+          // card face could paint over a raised logo near its far edge.
+          mesh.renderOrder = index + 1;
+          layerPool.push(mesh);
+          layerRoot.add(mesh);
+        }
+        const mesh = layerPool[index], position = layerPlacement(layer.box, portrait);
+        const layerTexture = textures.get(layer.image);
+        layerTexture.colorSpace = THREE.SRGBColorSpace;
+        if (!mesh.material.map) mesh.material.needsUpdate = true;
+        mesh.material.map = layerTexture;
+        mesh.position.set(position.x, position.y, 0);
+        mesh.scale.set(position.width, position.height, 1);
+        mesh.visible = true;
+        return { id: layer.id, mesh };
+      });
+      layoutLayers();
+      trimTextureCache();
       canvas.setAttribute('aria-label', `${name || '银行卡'}的三维预览。拖动或使用方向键环绕查看，Home 键复位。`);
       render();
       return true;
@@ -282,11 +349,16 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
     function clearCard() {
       if (disposed) return;
       cardRequest++;
-      requestedImage = null;
+      requestedImages.clear();
+      activeImages.clear();
       stopAnimation();
       orbit.copy(initialOrbit);
       card.rotation.z = 0;
       card.visible = false;
+      container.classList.remove('is-portrait');
+      currentLayers = [];
+      layerBounds = [];
+      layerPool.forEach(mesh => { mesh.visible = false; mesh.material.map = null; });
       canvas.setAttribute('aria-label', '银行卡的三维预览。拖动或使用方向键环绕查看，Home 键复位。');
       render();
     }
@@ -346,7 +418,7 @@ export function createCardViewer({ container, finish = 'original', onFinishChang
     observer = new ResizeObserver(resize);
     observer.observe(container);
     resize();
-    return { setCard, clearCard, setFinish, flip, resetView, rotate, dispose };
+    return { setCard, clearCard, setFinish, flip, resetView, rotate, setLayerSpacing, setLayerVisibility, dispose };
   } catch (error) {
     dispose();
     throw error;

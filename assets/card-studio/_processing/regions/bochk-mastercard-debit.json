@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "cardId": "bochk-mastercard-debit",
+  "hd": "assets/card-studio/bochk-mastercard-debit/hd.webp",
+  "clean": "assets/card-studio/bochk-mastercard-debit/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "中国银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.04623179227359088,
+        0.04618473895582329,
+        0.08106396453451552,
+        0.12650602409638553
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "BANK OF CHINA 文字",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.1317289423685877,
+        0.071285140562249,
+        0.3850538315389487,
+        0.06726907630522089
+      ]
+    },
+    {
+      "id": "platinum-debit",
+      "label": "白金借记卡文字",
+      "kind": "text",
+      "image": "layers/platinum-debit.png",
+      "box": [
+        0.818239392020266,
+        0.4126506024096386,
+        0.13489550348321722,
+        0.10943775100401607
+      ]
+    },
+    {
+      "id": "mastercard-logo",
+      "label": "万事达标志",
+      "kind": "logo",
+      "image": "layers/mastercard-logo.png",
+      "box": [
+        0.7498416719442685,
+        0.7208835341365462,
+        0.2051931602279924,
+        0.20481927710843373
+      ]
+    }
+  ]
+}

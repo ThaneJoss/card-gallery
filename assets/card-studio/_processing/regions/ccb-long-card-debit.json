@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "cardId": "ccb-long-card-debit",
+  "hd": "assets/card-studio/ccb-long-card-debit/hd.webp",
+  "clean": "assets/card-studio/ccb-long-card-debit/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "建设银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.05383153894870171,
+        0.08433734939759036,
+        0.11272957568081064,
+        0.18875502008032127
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.18809373020899303,
+        0.10441767068273092,
+        0.47815072830905636,
+        0.09437751004016064
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.18872704243191893,
+        0.20180722891566266,
+        0.41925269157694744,
+        0.055220883534136546
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "龙卡通储蓄卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.3850538315389487,
+        0.2961847389558233,
+        0.3141228625712476,
+        0.08433734939759036
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7188093730208993,
+        0.6757028112449799,
+        0.2628245725142495,
+        0.28112449799196787
+      ]
+    }
+  ]
+}

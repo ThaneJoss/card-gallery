@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "cardId": "ceb-sunshine-account-622672",
+  "hd": "assets/card-studio/ceb-sunshine-account-622672/hd.webp",
+  "clean": "assets/card-studio/ceb-sunshine-account-622672/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "光大银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.04996837444655281,
+        0.05728643216080402,
+        0.1941808981657179,
+        0.13869346733668342
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.2567994939911448,
+        0.05728643216080402,
+        0.3510436432637571,
+        0.0914572864321608
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.25806451612903225,
+        0.1527638190954774,
+        0.3497786211258697,
+        0.04522613065326633
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "阳光借记卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.25616698292220114,
+        0.2150753768844221,
+        0.13725490196078433,
+        0.05226130653266332
+      ]
+    },
+    {
+      "id": "debit",
+      "label": "Debit Card 文字",
+      "kind": "text",
+      "image": "layers/debit.png",
+      "box": [
+        0.49082858950031627,
+        0.2201005025125628,
+        0.1157495256166983,
+        0.04824120603015075
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.09993674889310562,
+        0.3185929648241206,
+        0.14231499051233396,
+        0.17788944723618091
+      ]
+    },
+    {
+      "id": "card-number",
+      "label": "样卡卡号",
+      "kind": "text",
+      "image": "layers/card-number.png",
+      "box": [
+        0.09171410499683745,
+        0.5417085427135678,
+        0.8197343453510436,
+        0.10753768844221105
+      ]
+    },
+    {
+      "id": "valid-date",
+      "label": "有效期",
+      "kind": "text",
+      "image": "layers/valid-date.png",
+      "box": [
+        0.21505376344086022,
+        0.7296482412060301,
+        0.2732447817836812,
+        0.07035175879396985
+      ]
+    },
+    {
+      "id": "direction",
+      "label": "插卡箭头",
+      "kind": "other",
+      "image": "layers/direction.png",
+      "box": [
+        0.03984819734345351,
+        0.8351758793969849,
+        0.07400379506641366,
+        0.09949748743718594
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7191650853889943,
+        0.671356783919598,
+        0.26818469323213157,
+        0.2864321608040201
+      ]
+    }
+  ]
+}

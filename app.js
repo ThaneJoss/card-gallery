@@ -1,5 +1,5 @@
-import { createCardTextureMapping } from './src/card-texture.mjs';
-import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
+import { cardView } from './src/card-studio.mjs';
+import { createCardStudio } from './src/card-studio-ui.js';
 
 (() => {
   'use strict';
@@ -45,13 +45,11 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
       if (!Array.isArray(networks) || ![...networks].every(network => supportedNetworks.has(network))) throw new Error(`${label}的 networks 须为卡组织数组：${[...supportedNetworks].join('、')}。`);
       const textureCorners = item.textureCorners;
       if (textureCorners !== undefined && (!Array.isArray(textureCorners) || textureCorners.length !== 4 || !textureCorners.every(point => Array.isArray(point) && point.length === 2 && point.every(value => Number.isFinite(value) && value >= 0 && value <= 1)))) throw new Error(`${label}的 textureCorners 须为四个归一化坐标。`);
-      const { imageWidth, imageHeight } = item;
-      const { portrait } = createCardTextureMapping({ width: imageWidth, height: imageHeight, textureCorners });
       return {
         id, name: text('name'), bank: text('bank'), type,
         networks: [...new Set(networks)],
         image: imagePath('image'),
-        imageWidth, imageHeight, portrait,
+        studio: item.studio,
         ...(textureCorners ? { textureCorners } : {})
       };
     });
@@ -78,12 +76,24 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   let viewerRequest = 0;
   let viewerBundle = null;
   let selectedFinish = 'original';
-  let activeCard = null, viewerReady = false, interacting = false, drag = null;
+  let activeCard = null, selectedView = 'original';
+  let viewerReady = false, drag = null;
   let pendingRotations = [];
-  const detailVisual = $('#detail-visual');
   const viewerStage = $('#detail-viewer');
   const viewerControls = $('#detail-viewer-controls');
   const viewerStatus = $('#detail-viewer-status');
+  const studio = createCardStudio({
+    onViewChange(view) {
+      selectedView = view;
+      viewerReady = false;
+      viewerStage.setAttribute('aria-busy', 'true');
+      viewerStatus.hidden = true;
+      studio.setBusy(true);
+      void showCardViewer(activeCard, ++viewerRequest, view);
+    },
+    onSpacingChange(value) { cardViewer?.setLayerSpacing(value); },
+    onVisibilityChange(id, visible) { cardViewer?.setLayerVisibility(id, visible); }
+  });
 
   function loadViewerBundle() {
     if (!viewerBundle) {
@@ -105,11 +115,9 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   function clearViewer() {
     viewerRequest += 1;
     viewerReady = false;
-    interacting = false;
     pendingRotations = [];
     if (drag && viewerStage.hasPointerCapture(drag.id)) viewerStage.releasePointerCapture(drag.id);
     drag = null;
-    detailVisual.classList.remove('is-interactive');
     cardViewer?.clearCard();
     selectFinish('original');
     viewerStage.hidden = true;
@@ -124,16 +132,17 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     return cardViewer;
   }
 
-  async function showCardViewer(card, request) {
+  async function showCardViewer(card, request, view) {
     try {
       const viewer = await prepareViewer();
       if (request !== viewerRequest || !dialog.open) return;
-      const applied = await viewer.setCard({ image: card.image, name: `${card.bank} ${card.name}`, textureCorners: card.textureCorners });
+      const applied = await viewer.setCard({ ...cardView(card, view), name: `${card.bank} ${card.name}` });
       if (!applied || request !== viewerRequest || !dialog.open) return;
       viewerReady = true;
       if (pendingRotations.length) viewer.rotate(pendingRotations);
       pendingRotations = [];
-      detailVisual.classList.toggle('is-interactive', interacting);
+      studio.applyTo(viewer);
+      studio.setBusy(false);
       viewerStage.setAttribute('aria-busy', 'false');
       viewerStatus.hidden = true;
       viewerControls.hidden = false;
@@ -146,46 +155,26 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
       cardViewer?.clearCard();
       viewerStage.setAttribute('aria-busy', 'false');
       viewerControls.querySelectorAll('button').forEach(button => { button.disabled = true; });
-      viewerStatus.textContent = '暂时无法显示立体效果，已保留大图。';
+      viewerStatus.textContent = '暂时无法显示立体效果，请关闭后重试。';
       viewerStatus.hidden = false;
     }
   }
 
-  function layoutPoster() {
-    if (!activeCard || !dialog.open) return;
-    const frame = fitCardFace(viewerStage.clientWidth, viewerStage.clientHeight, activeCard.portrait);
-    const poster = $('#detail-art .detail-poster');
-    Object.assign(poster.style, { left: `${frame.left}px`, top: `${frame.top}px`, width: `${frame.width}px`, height: `${frame.height}px`, borderRadius: `${frame.radius}px` });
-    poster.querySelector('img').style.transform = posterTransform(frame.width, frame.height, activeCard.textureCorners);
-  }
-  new ResizeObserver(layoutPoster).observe(viewerStage);
-
-  function activateViewer() {
-    interacting = true;
-    if (viewerReady) {
-      cardViewer.rotate([]);
-      detailVisual.classList.add('is-interactive');
-    }
-  }
   function rotateViewer(x, y, angle) {
-    if (!interacting) activateViewer();
     const rotation = { x, y, angle };
     if (viewerReady) cardViewer.rotate([rotation]);
     else pendingRotations.push(rotation);
   }
   function resetViewer() {
-    interacting = false;
     pendingRotations = [];
     selectFinish('original');
     cardViewer?.resetView();
-    detailVisual.classList.remove('is-interactive');
   }
   viewerStage.addEventListener('pointerdown', event => {
     if (drag || event.button !== 0) return;
     viewerStage.focus({ preventScroll: true });
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
     viewerStage.setPointerCapture(event.pointerId);
-    activateViewer();
   });
   viewerStage.addEventListener('pointermove', event => {
     if (!drag || event.pointerId !== drag.id) return;
@@ -216,15 +205,18 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   viewerControls.addEventListener('click', event => {
     const button = event.target.closest('[data-finish]');
     if (!button || !cardViewer) return;
-    activateViewer();
     selectFinish(button.dataset.finish);
   });
-  $('#viewer-flip').addEventListener('click', () => { activateViewer(); cardViewer?.flip(); });
+  $('#viewer-flip').addEventListener('click', () => cardViewer?.flip());
   $('#viewer-reset').addEventListener('click', resetViewer);
+  $('#viewer-background').addEventListener('click', event => {
+    const dark = viewerStage.classList.toggle('is-dark');
+    event.currentTarget.setAttribute('aria-pressed', String(dark));
+  });
 
   const escapeHTML = (text) => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const cardArt = (card, {lazy = false, priority = false} = {}) => {
-    return `<span class="card-art"><img data-card-image src="${escapeHTML(card.image)}" alt="${escapeHTML(`${card.bank} ${card.name}卡面`)}" draggable="false" decoding="async" loading="${lazy ? 'lazy' : 'eager'}" fetchpriority="${priority ? 'high' : 'auto'}"><span class="image-fallback" hidden>卡面暂不可用</span></span>`;
+    return `<span class="card-art"><img data-card-image src="${escapeHTML(card.studio?.thumbnail || card.image)}" alt="${escapeHTML(`${card.bank} ${card.name}卡面`)}" draggable="false" decoding="async" loading="${lazy ? 'lazy' : 'eager'}" fetchpriority="${priority ? 'high' : 'auto'}"><span class="image-fallback" hidden>卡面暂不可用</span>${card.studio?.status === 'ready' ? `<span class="card-studio-badge">高清 · ${card.studio.elements.length} 层</span>` : ''}</span>`;
   };
   const cardTypeAndNetworks = (card) => [
     card.type === 'debit' ? '储蓄卡' : '信用卡',
@@ -457,10 +449,14 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     if (!card) return;
     clearViewer();
     activeCard = card;
-    $('#detail-art').innerHTML = `<div class="detail-poster"><img src="${escapeHTML(card.image)}" alt="" draggable="false" decoding="async" fetchpriority="high"></div>`;
-    $('#detail-art').hidden = false;
+    selectedView = studio.setCard(card);
+    studio.setBusy(true);
+    const position = visibleCards.findIndex(item => item.id === id);
+    $('#detail-position').textContent = `${position + 1} / ${visibleCards.length}`;
+    $('#previous-card').disabled = position <= 0;
+    $('#next-card').disabled = position < 0 || position >= visibleCards.length - 1;
     viewerStage.hidden = false;
-    viewerStage.setAttribute('aria-label', `${card.bank} ${card.name}，点击或拖动环绕查看，方向键旋转，Home 复位`);
+    viewerStage.setAttribute('aria-label', `${card.bank} ${card.name}，拖动环绕查看，方向键旋转，Home 复位`);
     viewerStage.setAttribute('aria-busy', 'true');
     viewerStatus.textContent = '';
     viewerStatus.hidden = true;
@@ -477,8 +473,16 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
       $('.dialog-content').scrollTop = 0;
       $('#close-dialog').focus({preventScroll:true});
     }
-    layoutPoster();
-    void showCardViewer(card, viewerRequest);
+    lastFocusedCard = gallery.querySelector(`[data-card="${CSS.escape(id)}"]`);
+    void showCardViewer(card, viewerRequest, selectedView);
+  }
+
+  for (const [selector, direction] of [['#previous-card', -1], ['#next-card', 1]]) {
+    $(selector).addEventListener('click', () => {
+      const index = visibleCards.findIndex(card => card.id === activeCard.id);
+      const next = visibleCards[index + direction];
+      if (next) showCard(next.id);
+    });
   }
 
   function fitDialog() {

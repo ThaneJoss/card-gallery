@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "cardId": "spdb-unionpay-platinum-credit-622228",
+  "hd": "assets/card-studio/spdb-unionpay-platinum-credit-622228/hd.webp",
+  "clean": "assets/card-studio/spdb-unionpay-platinum-credit-622228/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "浦发银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.04507936507936508,
+        0.05905905905905906,
+        0.11682539682539683,
+        0.15415415415415415
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.17587301587301588,
+        0.06306306306306306,
+        0.19873015873015873,
+        0.08008008008008008
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.17904761904761904,
+        0.14314314314314314,
+        0.18476190476190477,
+        0.06006006006006006
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.08507936507936507,
+        0.26926926926926925,
+        0.14793650793650795,
+        0.1921921921921922
+      ]
+    },
+    {
+      "id": "quickpass",
+      "label": "闪付标志",
+      "kind": "logo",
+      "image": "layers/quickpass.png",
+      "box": [
+        0.8019047619047619,
+        0.26326326326326327,
+        0.1619047619047619,
+        0.17717717717717718
+      ]
+    },
+    {
+      "id": "card-number",
+      "label": "样卡卡号",
+      "kind": "text",
+      "image": "layers/card-number.png",
+      "box": [
+        0.08126984126984127,
+        0.5055055055055055,
+        0.8457142857142858,
+        0.10810810810810811
+      ]
+    },
+    {
+      "id": "bin",
+      "label": "卡号前缀",
+      "kind": "text",
+      "image": "layers/bin.png",
+      "box": [
+        0.08317460317460318,
+        0.6206206206206206,
+        0.06476190476190476,
+        0.043043043043043044
+      ]
+    },
+    {
+      "id": "valid-date",
+      "label": "有效期",
+      "kind": "text",
+      "image": "layers/valid-date.png",
+      "box": [
+        0.2,
+        0.6746746746746747,
+        0.18412698412698414,
+        0.09009009009009009
+      ]
+    },
+    {
+      "id": "sample-name",
+      "label": "样卡姓名",
+      "kind": "text",
+      "image": "layers/sample-name.png",
+      "box": [
+        0.06285714285714286,
+        0.7837837837837838,
+        0.3879365079365079,
+        0.06706706706706707
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "信用卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.06603174603174604,
+        0.8688688688688688,
+        0.2,
+        0.05305305305305305
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7168253968253968,
+        0.6496496496496497,
+        0.2698412698412698,
+        0.2852852852852853
+      ]
+    }
+  ]
+}

@@ -68,32 +68,67 @@
   <footer class="site-footer"><p>卡间拾光 · 银行卡收藏画廊</p></footer>
   <dialog id="card-dialog" class="card-dialog" aria-labelledby="detail-title">
     <div class="dialog-toolbar">
+      <div class="detail-navigation" aria-label="浏览筛选结果中的卡片">
+        <button class="icon-button" id="previous-card" type="button" aria-label="上一张卡片"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+        <span id="detail-position" aria-live="polite"></span>
+        <button class="icon-button" id="next-card" type="button" aria-label="下一张卡片"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+      </div>
       <button class="icon-button dialog-close" id="close-dialog" type="button" aria-label="关闭卡面详情"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
     </div>
     <div class="dialog-content">
-      <div class="detail-visual" id="detail-visual">
-        <div id="detail-art" class="detail-art" aria-hidden="true"></div>
-        <div id="detail-viewer" class="card-viewer-stage" tabindex="0" role="img" aria-label="银行卡预览，点击或拖动查看三维效果" aria-busy="false" hidden></div>
-        <p id="detail-viewer-status" class="viewer-status" role="status" hidden></p>
-      </div>
-      <div class="viewer-controls" id="detail-viewer-controls" hidden>
-        <div class="viewer-toolbar">
-          <div class="viewer-finishes" role="group" aria-label="卡片表面材质">
-            <button type="button" data-finish="original" aria-pressed="true">原色</button>
-            <button type="button" data-finish="matte" aria-pressed="false">哑光</button>
-            <button type="button" data-finish="gloss" aria-pressed="false">覆膜</button>
-            <button type="button" data-finish="iridescent" aria-pressed="false">虹彩</button>
-          </div>
-          <div class="viewer-actions">
-            <button type="button" id="viewer-flip">查看另一面</button>
-            <button type="button" id="viewer-reset">复位</button>
-          </div>
-        </div>
-        <p class="viewer-help" id="viewer-help">拖动或用方向键 360° 环绕 · Home 复位</p>
-      </div>
       <div class="detail-information">
-        <h2 id="detail-title"></h2>
-        <div class="detail-meta"><span id="detail-bank" class="detail-bank"></span><span class="detail-type" id="detail-type"></span></div>
+        <div><h2 id="detail-title"></h2><div class="detail-meta"><span id="detail-bank" class="detail-bank"></span><span class="detail-type" id="detail-type"></span></div></div>
+        <p id="detail-asset-note" class="detail-asset-note"></p>
+      </div>
+      <div class="card-view-options" id="card-view-options" role="group" aria-label="卡面版本" hidden>
+        <button type="button" data-card-view="hd" aria-pressed="true">高清卡面</button>
+        <button type="button" data-card-view="clean" aria-pressed="false">纯底图</button>
+        <button type="button" data-card-view="layers" aria-pressed="false">分层展示</button>
+        <button type="button" data-card-view="original" aria-pressed="false">原始卡面</button>
+      </div>
+      <div class="detail-workspace">
+        <div class="detail-stage-column">
+          <div class="detail-visual" id="detail-visual">
+            <div id="detail-viewer" class="card-viewer-stage" tabindex="0" role="img" aria-label="银行卡三维预览，拖动环绕查看" aria-busy="false" hidden></div>
+            <p id="detail-viewer-status" class="viewer-status" role="status" hidden></p>
+          </div>
+          <div class="viewer-controls" id="detail-viewer-controls" hidden>
+            <div class="viewer-toolbar">
+              <div class="viewer-finishes" role="group" aria-label="卡片表面材质">
+                <button type="button" data-finish="original" aria-pressed="true">原色</button>
+                <button type="button" data-finish="matte" aria-pressed="false">哑光</button>
+                <button type="button" data-finish="gloss" aria-pressed="false">覆膜</button>
+                <button type="button" data-finish="iridescent" aria-pressed="false">虹彩</button>
+              </div>
+              <div class="viewer-actions">
+                <button type="button" id="viewer-background" aria-pressed="false">深色背景</button>
+                <button type="button" id="viewer-flip">查看另一面</button>
+                <button type="button" id="viewer-reset">复位</button>
+              </div>
+            </div>
+            <p class="viewer-help" id="viewer-help">拖动或用方向键 360° 环绕 · Home 复位</p>
+          </div>
+          <div class="detail-filebar"><span id="detail-view-name"></span><a id="download-current" class="text-button" download>下载当前卡面 <span aria-hidden="true">↓</span></a></div>
+          <div class="studio-downloads" id="studio-downloads" hidden>
+            <a id="download-hd" download>高清卡面</a><a id="download-clean" download>纯底图</a><a id="download-coordinates" download>图层坐标 JSON</a>
+          </div>
+          <p class="studio-description" id="studio-description" hidden>素材含 AI 重绘与图案补全，可切换原始卡面对照。</p>
+        </div>
+        <aside id="studio-panel" class="studio-panel" aria-label="卡面图层" hidden>
+          <div class="studio-panel-heading"><h3>卡面图层 <span id="layer-count"></span></h3><div><button type="button" data-layers-visible="true">全显</button><button type="button" data-layers-visible="false">全隐</button></div></div>
+          <label class="layer-spacing-label" for="layer-spacing">分离距离 <output id="layer-spacing-value" for="layer-spacing">55%</output></label>
+          <input id="layer-spacing" type="range" min="0" max="100" value="55" aria-label="图层分离距离">
+          <div id="layer-map" class="layer-map" aria-label="元素位置图"></div>
+          <ul id="layer-list" class="layer-list"></ul>
+          <div id="selected-layer" class="selected-layer">
+            <div class="selected-layer-heading"><strong id="selected-layer-title"></strong><div class="preview-background" role="group" aria-label="透明图层预览底色"><button type="button" data-preview-background="light" aria-pressed="true">浅底</button><button type="button" data-preview-background="dark" aria-pressed="false">深底</button></div></div>
+            <div class="selected-layer-art transparency"><img id="selected-layer-preview" alt=""></div>
+            <p id="selected-layer-text"></p>
+            <p id="selected-layer-position" class="layer-position"></p>
+            <p class="layer-coordinate-help">以高清卡面左上角为坐标原点</p>
+            <a id="selected-layer-download" class="text-button" download>下载透明图层 PNG <span aria-hidden="true">↓</span></a>
+          </div>
+        </aside>
       </div>
     </div>
   </dialog>
