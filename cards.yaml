@@ -59,17 +59,17 @@
   bin: 622168
 
 
-- 名称: 金穗社保卡
+- 名称: 只此青绿借记卡（人物横版）
   银行: 中国农业银行
   类型: 储蓄卡
-  # BIN 622823：农行公告 https://www.abchina.com/cn/branch/sh/preInfo/fwgg/201201/t20120120_870632.htm。
-  # 采用农行河南分行公布的 622823 卡面作为代表图，不细分地区版本。
-  # 来源：https://www.abchina.com/cn/branch/ha/branchchar/201603/t20160323_861043.htm。
-  图片: ./assets/cards/abc-jinsui-social-security.png
+  # 2026-09-22 按用户要求，以同银行的普通借记卡替换金穗社保卡。
+  # 来源：Hibank 第三方图鉴 https://hi.zzz.moe/face，条目 514「农业银行只此青绿人物卡（横版）」。
+  # 图鉴标注来源 Apple Pay、Debit / UnionPay；保留下载原图，不重绘。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/1000042961.png
+  图片: ./assets/cards/abc-zhici-qinglv-debit.png
   卡组织: 银联
-  编号: abc-jinsui-social-security
-  # 上述农行官方公告直接列明「金穗社保卡 / 借记卡 / 622823」；BIN 不区分地区卡面。
-  bin: 622823
+  编号: abc-zhici-qinglv-debit
+  # 来源未列出此卡 BIN，不沿用旧社保卡的 622823，也不从其他农行卡推填。
 
 - 名称: 太平洋马年贺岁卡
   银行: 交通银行
