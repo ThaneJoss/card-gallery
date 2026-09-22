@@ -24,10 +24,12 @@
     },
     {
       "name": "香港汇立",
-      "file": "banks/welab.png",
-      "source_url": "https://www.welab.bank/favicon.png",
+      "file": "banks/welab.svg",
+      "source_url": "https://www.welab.bank/media/documents/welab.bank-1.7.80.68.apk",
       "source_page_url": "https://www.welab.bank/en/",
-      "method": "官网原始品牌图标文件。"
+      "source_title": "WeLab Bank 官方 Android 安装包内 custom-font-icon.svg 的 welab_logo 字形",
+      "source_asset": "assets/custom/custom-font-icon.svg#welab_logo",
+      "method": "静态解压官方域名提供的 APK，直接提取 SVG 字体中 glyph-name=welab_logo 的原始 d 路径，仅翻转字体 Y 轴并裁切 viewBox；保留字体单色呈现（黑色），未重画、描摹或套用未经来源确认的渐变。官网当前下载入口已更新为 /uploads/welab.bank-2.0.20.108.apk，所用旧版官方 URL 仍有效。"
     },
     {
       "name": "香港大象",
@@ -118,6 +120,81 @@
       "sha256": "c719ddb5133f6aa84726a801a8f2c5075d4c5babc359d7f8a871c3028a21d647"
     },
     {
+      "name": "中国邮政储蓄银行",
+      "file": "banks/psbc.svg",
+      "source_url": "https://www.psbc.com/cn/gyyc/tzzgx/cwxx/cwbg/cwxxagbg/202503/P020250327777905099004.pdf",
+      "source_title": "中国邮政储蓄银行 2024 年度报告",
+      "source_page": 1,
+      "method": "pdftocairo -f 1 -l 1 -svg 提取封面原生矢量；保留绿色独立邮储标志单一路径及原色，裁切 viewBox，无描摹或位图。"
+    },
+    {
+      "name": "中国民生银行",
+      "file": "banks/cmbc.svg",
+      "source_url": "https://ir.cmbc.com.cn/media/1xbfumut/logo.svg",
+      "source_page_url": "https://ir.cmbc.com.cn/en/sitemap/",
+      "source_title": "中国民生银行投资者关系官方网站 logo.svg",
+      "method": "保留官方 SVG 前两个蓝绿色标志路径与原色，移除行名文字，裁切 viewBox。"
+    },
+    {
+      "name": "中国光大银行",
+      "file": "banks/ceb.svg",
+      "source_url": "https://static.cebbank.com/site/tzzgx/cwbg/Hg45/339286165/2025042709272652971.pdf",
+      "source_page_url": "https://www.cebbank.com/site/tzzgx/cwbg/Hg45/339286165/index.html",
+      "source_title": "中国光大银行 2024 年年度报告（印刷版）",
+      "source_page": 1,
+      "method": "pdftocairo -f 1 -l 1 -svg 提取封面原生矢量；保留独立渐变 B 标志的原始 clipPath、路径及 linearGradient，移除文字及背景，裁切 viewBox，无描摹或位图。"
+    },
+    {
+      "name": "华夏银行",
+      "file": "banks/hxb.svg",
+      "source_url": "https://vpr.hkma.gov.hk/statics/assets/doc/100334/ar_23/ar_23_chi.pdf",
+      "source_title": "华夏银行 2023 年度报告（香港金融管理局虚拟资料室披露原件）",
+      "source_page": 1,
+      "method": "pdftocairo 将 PDF 第 1 页原始矢量导出 SVG，保留独立龙形标志的两条原始 path，按坐标设置 viewBox；保留原始红色填色，不描摹、不重画、不含位图。"
+    },
+    {
+      "name": "广发银行",
+      "file": "banks/cgb.svg",
+      "source_url": "https://www.cgbchina.com.cn/subsite/202504/27239769/2024ape.pdf",
+      "source_page_url": "https://m.cgbchina.com.cn/Channel/22779661",
+      "source_title": "CGB 2024 Annual Report",
+      "source_page": 1,
+      "method": "pdftocairo 将 PDF 第 1 页原始矢量导出 SVG，保留独立三角标志七条原始 path 及其裁剪定义，按坐标设置 viewBox；保留全部原始填色，不描摹、不重画、不含位图。"
+    },
+    {
+      "name": "浙商银行",
+      "file": "banks/czb.svg",
+      "source_url": "https://www.czbank.com/cn/investor/financial_info/reports_3904/2024/20240430/202503/P020250331387037556216.pdf",
+      "source_title": "浙商银行股份有限公司二〇二四年度报告",
+      "source_page": 1,
+      "method": "pdftocairo -f 1 -l 1 -svg；从封面提取独立红色标志的 10 条原始矢量路径，保留原色并收紧 viewBox；无描摹或位图。"
+    },
+    {
+      "name": "渤海银行",
+      "file": "banks/cbhb.svg",
+      "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2025/0429/2025042902184_c.pdf",
+      "source_title": "2024 渤海银行 ESG（社会责任）报告（港交所官方披露）",
+      "source_page": 1,
+      "method": "pdftocairo -f 1 -l 1 -svg；从封面左上角独立标志提取蓝色和绿色的 2 条原始矢量路径，保留原色并收紧 viewBox；不包含封面其他位图。"
+    },
+    {
+      "name": "恒丰银行",
+      "file": "banks/hf.svg",
+      "source_url": "https://hfbank.com.cn/upload/attach/%E6%81%92%E4%B8%B0%E9%93%B6%E8%A1%8C%E8%82%A1%E4%BB%BD%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8%E7%8E%AF%E5%A2%83%E2%96%AA%E7%A4%BE%E4%BC%9A%E2%96%AA%E6%B2%BB%E7%90%86%EF%BC%88ESG%EF%BC%89%E6%8A%A5%E5%91%8A%EF%BC%882024%EF%BC%89.pdf",
+      "source_page_url": "https://hfbank.com.cn/dzzgj/qyshzl/shzlbg/307555.shtml",
+      "source_title": "恒丰银行股份有限公司环境▪社会▪治理（ESG）报告（2024）",
+      "source_page": 1,
+      "method": "pdftocairo -f 1 -l 1 -svg；从封面右上角独立标志提取 7 条金色和 1 条蓝色原始矢量路径，保留原色并收紧 viewBox；不包含封面其他位图及印刷辅助标记。"
+    },
+    {
+      "name": "平安银行",
+      "file": "banks/pab.svg",
+      "source_url": "https://resources.pingan.com/app_inc/bank/v2023/images/PClogo_bank.svg",
+      "source_page_url": "https://bank.pingan.com/",
+      "source_title": "平安银行官网页头 PClogo_银行 官方原生 SVG",
+      "method": "提取官方 SVG 中 id=银行logo 的完整单条字标 path，保持 d、#F05A23 原色及 evenodd 填充规则；移除平移定位及等于画布边界的遮罩，viewBox 设为该银行字标原始 0 0 112 24。不截断文字、不重新组合或描摹路径，不含位图。"
+    },
+    {
       "name": "Visa",
       "file": "networks/visa.svg",
       "source_url": "https://design.visa.com/",
@@ -165,5 +242,6 @@
       "method": "官网原始 SVG 文件。",
       "sha256": "eeb8825a063b7cf8e8138f540e0eae36168885c9f37cad849f52a4e6bac28199"
     }
-  ]
+  ],
+  "bank_icons_verified_on": "2026-09-22"
 }
