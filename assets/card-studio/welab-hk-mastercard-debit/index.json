@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "cardId": "welab-hk-mastercard-debit",
+  "status": "ready",
+  "width": 1579,
+  "height": 996,
+  "hd": "hd.webp",
+  "clean": "clean.webp",
+  "elements": [
+    {
+      "id": "bank-logo",
+      "label": "汇立银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.050031665611146296,
+        0.07329317269076305,
+        0.16782773907536416,
+        0.1636546184738956
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "WeLab Bank 文字",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.22419252691576946,
+        0.07228915662650602,
+        0.18682710576314124,
+        0.1646586345381526
+      ]
+    },
+    {
+      "id": "mastercard-logo",
+      "label": "万事达标志",
+      "kind": "logo",
+      "image": "layers/mastercard-logo.png",
+      "box": [
+        0.7289423685877138,
+        0.6957831325301205,
+        0.22102596580113995,
+        0.2178714859437751
+      ]
+    }
+  ],
+  "notes": [
+    "高清图和底图为生成式重建，补全区域并非原始真实图案。",
+    "透明层 RGB 来自完整高清图；局部差分结合人工区域与颜色约束估计 alpha，细边缘可能有背景残留。"
+  ]
+}

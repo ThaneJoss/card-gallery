@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "cardId": "cmb-koi-debit",
+  "hd": "assets/card-studio/cmb-koi-debit/hd.webp",
+  "clean": "assets/card-studio/cmb-koi-debit/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "招商银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.0594059405940594,
+        0.03209242618741977,
+        0.1188118811881188,
+        0.07381258023106547
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.1801980198019802,
+        0.03530166880616174,
+        0.32475247524752476,
+        0.05006418485237484
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.18316831683168316,
+        0.08472400513478819,
+        0.3188118811881188,
+        0.019255455712451863
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "储蓄卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.1801980198019802,
+        0.1116816431322208,
+        0.3336633663366337,
+        0.02503209242618742
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.3346534653465347,
+        0.7278562259306803,
+        0.18118811881188118,
+        0.14505776636713735
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.5455445544554456,
+        0.772785622593068,
+        0.42475247524752474,
+        0.19383825417201542
+      ]
+    }
+  ]
+}

@@ -33,11 +33,20 @@ const canvas = page => page.locator('#detail-viewer canvas.card-viewer-canvas');
 const stage = page => page.locator('#detail-viewer');
 async function snapshot(page, name) {
   await frames(page);
-  // Keep the actual focus/touch state. Only omit the focus ring in comparison images.
+  // Keep focus and gestures intact. After touch controls have scrolled a tall
+  // portrait card, move only the scroll position for capture and then restore it.
+  const scroll = await page.locator('.dialog-content').evaluate(element => {
+    const previous = element.scrollTop, visible = element.getBoundingClientRect();
+    const card = document.querySelector('#detail-visual').getBoundingClientRect();
+    if (card.top < visible.top || card.bottom > visible.bottom) element.scrollTop += card.top - visible.top;
+    return previous;
+  });
+  await frames(page);
   const box = await page.locator('#detail-visual').boundingBox();
   const viewport = await page.screenshot({ scale: 'css', style: '#detail-viewer:focus-visible { outline: none !important; }' });
   const screenshot = await sharp(viewport).extract({ left: Math.floor(box.x), top: Math.floor(box.y), width: Math.floor(box.width), height: Math.floor(box.height) }).png().toBuffer();
   await writeFile(resolve(output, `${name}.png`), screenshot);
+  await page.locator('.dialog-content').evaluate((element, previous) => { element.scrollTop = previous; }, scroll);
   return screenshot;
 }
 async function difference(a, b) {
@@ -214,6 +223,8 @@ try {
   await closeCard(page, otherHorizontal.id, false);
   await openCard(page, 'cmb-koi-debit');
   await assertSharedRenderer();
+  await page.locator('[data-card-view="original"]').click();
+  await page.waitForFunction(() => document.querySelector('#detail-viewer').getAttribute('aria-busy') === 'false');
   const photo = await snapshot(page, 'photo-texture');
   assert.ok(await difference(photo, front) > 0 && await difference(photo, portrait) > 0, '照片四角映射应显示对应卡面');
   await closeCard(page, 'cmb-koi-debit');
@@ -237,7 +248,7 @@ try {
   const uncached = cards.find(card => ![horizontal.id, vertical.id, otherHorizontal.id, 'cmb-koi-debit'].includes(card.id));
   let releaseImage;
   const imageGate = new Promise(resolve => { releaseImage = resolve; });
-  const oldImageURL = new URL(uncached.image, origin + '/').href;
+  const oldImageURL = new URL(uncached.studio?.status === 'ready' ? uncached.studio.hd : uncached.image, origin + '/').href;
   const pendingImage = page.waitForRequest(oldImageURL);
   await page.route(oldImageURL, async route => {
     await imageGate;

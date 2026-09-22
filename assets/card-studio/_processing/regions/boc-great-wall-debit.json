@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "cardId": "boc-great-wall-debit",
+  "hd": "assets/card-studio/boc-great-wall-debit/hd.webp",
+  "clean": "assets/card-studio/boc-great-wall-debit/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "中国银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.046865104496516784,
+        0.07028112449799197,
+        0.11526282457251424,
+        0.178714859437751
+      ],
+      "mode": "red"
+    },
+    {
+      "id": "bank-name",
+      "label": "中国银行文字",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.17289423685877137,
+        0.08032128514056225,
+        0.2330588980367321,
+        0.10843373493975904
+      ],
+      "mode": "black"
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.17479417352754908,
+        0.20381526104417672,
+        0.2311589613679544,
+        0.04216867469879518
+      ],
+      "mode": "black"
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7150094996833439,
+        0.6767068273092369,
+        0.26472450918302726,
+        0.27309236947791166
+      ]
+    }
+  ]
+}

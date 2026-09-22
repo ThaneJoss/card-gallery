@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "cardId": "citic-visa-platinum-debit",
+  "hd": "assets/card-studio/citic-visa-platinum-debit/hd.webp",
+  "clean": "assets/card-studio/citic-visa-platinum-debit/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "中信银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.04924623115577889,
+        0.03478810879190386,
+        0.15376884422110554,
+        0.09803921568627451
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.2050251256281407,
+        0.036053130929791274,
+        0.37286432160804023,
+        0.06325110689437065
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.2100502512562814,
+        0.10183428209993675,
+        0.36180904522613067,
+        0.02403542061986085
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "借记卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.20804020100502513,
+        0.13409234661606578,
+        0.3658291457286432,
+        0.03099304237824162
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.3306532663316583,
+        0.7413029728020241,
+        0.17386934673366833,
+        0.137887413029728
+      ]
+    },
+    {
+      "id": "visa-logo",
+      "label": "Visa 标志",
+      "kind": "logo",
+      "image": "layers/visa-logo.png",
+      "box": [
+        0.5839195979899497,
+        0.8380771663504112,
+        0.36683417085427134,
+        0.07969639468690702
+      ]
+    },
+    {
+      "id": "platinum",
+      "label": "白金标识",
+      "kind": "text",
+      "image": "layers/platinum.png",
+      "box": [
+        0.7165829145728643,
+        0.9228336495888678,
+        0.23417085427135678,
+        0.036685641998734975
+      ]
+    }
+  ]
+}

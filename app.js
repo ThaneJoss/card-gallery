@@ -1,3 +1,6 @@
+import { cardView } from './src/card-studio.mjs';
+import { createCardStudio } from './src/card-studio-ui.js';
+
 (() => {
   'use strict';
 
@@ -46,6 +49,7 @@
         id, name: text('name'), bank: text('bank'), type,
         networks: [...new Set(networks)],
         image: imagePath('image'),
+        studio: item.studio,
         ...(textureCorners ? { textureCorners } : {})
       };
     });
@@ -72,11 +76,24 @@
   let viewerRequest = 0;
   let viewerBundle = null;
   let selectedFinish = 'original';
+  let activeCard = null, selectedView = 'original';
   let viewerReady = false, drag = null;
   let pendingRotations = [];
   const viewerStage = $('#detail-viewer');
   const viewerControls = $('#detail-viewer-controls');
   const viewerStatus = $('#detail-viewer-status');
+  const studio = createCardStudio({
+    onViewChange(view) {
+      selectedView = view;
+      viewerReady = false;
+      viewerStage.setAttribute('aria-busy', 'true');
+      viewerStatus.hidden = true;
+      studio.setBusy(true);
+      void showCardViewer(activeCard, ++viewerRequest, view);
+    },
+    onSpacingChange(value) { cardViewer?.setLayerSpacing(value); },
+    onVisibilityChange(id, visible) { cardViewer?.setLayerVisibility(id, visible); }
+  });
 
   function loadViewerBundle() {
     if (!viewerBundle) {
@@ -115,15 +132,17 @@
     return cardViewer;
   }
 
-  async function showCardViewer(card, request) {
+  async function showCardViewer(card, request, view) {
     try {
       const viewer = await prepareViewer();
       if (request !== viewerRequest || !dialog.open) return;
-      const applied = await viewer.setCard({ image: card.image, name: `${card.bank} ${card.name}`, textureCorners: card.textureCorners });
+      const applied = await viewer.setCard({ ...cardView(card, view), name: `${card.bank} ${card.name}` });
       if (!applied || request !== viewerRequest || !dialog.open) return;
       viewerReady = true;
       if (pendingRotations.length) viewer.rotate(pendingRotations);
       pendingRotations = [];
+      studio.applyTo(viewer);
+      studio.setBusy(false);
       viewerStage.setAttribute('aria-busy', 'false');
       viewerStatus.hidden = true;
       viewerControls.hidden = false;
@@ -190,10 +209,14 @@
   });
   $('#viewer-flip').addEventListener('click', () => cardViewer?.flip());
   $('#viewer-reset').addEventListener('click', resetViewer);
+  $('#viewer-background').addEventListener('click', event => {
+    const dark = viewerStage.classList.toggle('is-dark');
+    event.currentTarget.setAttribute('aria-pressed', String(dark));
+  });
 
   const escapeHTML = (text) => String(text).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const cardArt = (card, {lazy = false, priority = false} = {}) => {
-    return `<span class="card-art"><img data-card-image src="${escapeHTML(card.image)}" alt="${escapeHTML(`${card.bank} ${card.name}卡面`)}" draggable="false" decoding="async" loading="${lazy ? 'lazy' : 'eager'}" fetchpriority="${priority ? 'high' : 'auto'}"><span class="image-fallback" hidden>卡面暂不可用</span></span>`;
+    return `<span class="card-art"><img data-card-image src="${escapeHTML(card.studio?.thumbnail || card.image)}" alt="${escapeHTML(`${card.bank} ${card.name}卡面`)}" draggable="false" decoding="async" loading="${lazy ? 'lazy' : 'eager'}" fetchpriority="${priority ? 'high' : 'auto'}"><span class="image-fallback" hidden>卡面暂不可用</span>${card.studio?.status === 'ready' ? `<span class="card-studio-badge">高清 · ${card.studio.elements.length} 层</span>` : ''}</span>`;
   };
   const cardTypeAndNetworks = (card) => [
     card.type === 'debit' ? '储蓄卡' : '信用卡',
@@ -425,6 +448,13 @@
     const card = cards.find(item => item.id === id);
     if (!card) return;
     clearViewer();
+    activeCard = card;
+    selectedView = studio.setCard(card);
+    studio.setBusy(true);
+    const position = visibleCards.findIndex(item => item.id === id);
+    $('#detail-position').textContent = `${position + 1} / ${visibleCards.length}`;
+    $('#previous-card').disabled = position <= 0;
+    $('#next-card').disabled = position < 0 || position >= visibleCards.length - 1;
     viewerStage.hidden = false;
     viewerStage.setAttribute('aria-label', `${card.bank} ${card.name}，拖动环绕查看，方向键旋转，Home 复位`);
     viewerStage.setAttribute('aria-busy', 'true');
@@ -443,7 +473,16 @@
       $('.dialog-content').scrollTop = 0;
       $('#close-dialog').focus({preventScroll:true});
     }
-    void showCardViewer(card, viewerRequest);
+    lastFocusedCard = gallery.querySelector(`[data-card="${CSS.escape(id)}"]`);
+    void showCardViewer(card, viewerRequest, selectedView);
+  }
+
+  for (const [selector, direction] of [['#previous-card', -1], ['#next-card', 1]]) {
+    $(selector).addEventListener('click', () => {
+      const index = visibleCards.findIndex(card => card.id === activeCard.id);
+      const next = visibleCards[index + direction];
+      if (next) showCard(next.id);
+    });
   }
 
   function fitDialog() {

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { build as bundle } from 'esbuild';
 import { parseCards } from './card-data.mjs';
+import { publishCardStudio } from './card-studio.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -65,7 +66,9 @@ export async function buildSite({ root = projectRoot, log = console.log } = {}) 
             .resize({ width: 1600, withoutEnlargement: true })
             .webp({ quality: 85 })
             .toFile(resolve(output, imagePath));
-          builtCards[position] = { ...card, image: imagePath, imageWidth: dimensions.width, imageHeight: dimensions.height };
+          const studio = await publishCardStudio({ root, output, cardId: card.id });
+          builtCards[position] = { ...card, image: imagePath, imageWidth: dimensions.width, imageHeight: dimensions.height,
+            ...(studio ? { studio } : {}) };
         } catch (error) {
           throw new Error(`卡片「${card.id}」处理失败：${error.message}`, { cause: error });
         }

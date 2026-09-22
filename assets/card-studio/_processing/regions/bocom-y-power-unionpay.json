@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "cardId": "bocom-y-power-unionpay",
+  "hd": "assets/card-studio/bocom-y-power-unionpay/hd.webp",
+  "clean": "assets/card-studio/bocom-y-power-unionpay/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "交通银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.04496516782773907,
+        0.06325301204819277,
+        0.06206459784673844,
+        0.10341365461847389
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行名称文字",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.11019632678910703,
+        0.0642570281124498,
+        0.24889170360987967,
+        0.10441767068273092
+      ]
+    },
+    {
+      "id": "product-type",
+      "label": "太平洋卡文字",
+      "kind": "text",
+      "image": "layers/product-type.png",
+      "box": [
+        0.12222925902469918,
+        0.1646586345381526,
+        0.21785940468651044,
+        0.04116465863453815
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.08929702343255225,
+        0.3002008032128514,
+        0.16529449018366055,
+        0.22088353413654618
+      ]
+    },
+    {
+      "id": "youth",
+      "label": "YOUTH 文字",
+      "kind": "text",
+      "image": "layers/youth.png",
+      "box": [
+        0.5009499683343889,
+        0.2740963855421687,
+        0.2628245725142495,
+        0.09136546184738956
+      ]
+    },
+    {
+      "id": "power",
+      "label": "POWER 文字",
+      "kind": "text",
+      "image": "layers/power.png",
+      "box": [
+        0.4591513616212793,
+        0.3644578313253012,
+        0.30905636478784043,
+        0.0853413654618474
+      ]
+    },
+    {
+      "id": "card-number",
+      "label": "样卡卡号",
+      "kind": "text",
+      "image": "layers/card-number.png",
+      "box": [
+        0.09119696010132995,
+        0.5491967871485943,
+        0.8201393286890437,
+        0.09236947791164658
+      ]
+    },
+    {
+      "id": "bin",
+      "label": "卡号前缀",
+      "kind": "text",
+      "image": "layers/bin.png",
+      "box": [
+        0.09373020899303357,
+        0.6495983935742972,
+        0.06396453451551615,
+        0.04417670682730924
+      ]
+    },
+    {
+      "id": "date-label",
+      "label": "月份年份说明",
+      "kind": "text",
+      "image": "layers/date-label.png",
+      "box": [
+        0.41988600379987334,
+        0.6536144578313253,
+        0.15072830905636478,
+        0.04317269076305221
+      ]
+    },
+    {
+      "id": "credit-card",
+      "label": "信用卡文字",
+      "kind": "text",
+      "image": "layers/credit-card.png",
+      "box": [
+        0.09373020899303357,
+        0.7469879518072289,
+        0.18429385687143762,
+        0.04317269076305221
+      ]
+    },
+    {
+      "id": "sample-name",
+      "label": "样卡姓名",
+      "kind": "text",
+      "image": "layers/sample-name.png",
+      "box": [
+        0.09309689677010766,
+        0.8012048192771084,
+        0.2621912602913236,
+        0.06927710843373494
+      ]
+    },
+    {
+      "id": "valid-date",
+      "label": "有效期文字",
+      "kind": "text",
+      "image": "layers/valid-date.png",
+      "box": [
+        0.3286890436985434,
+        0.7279116465863453,
+        0.1830272324255858,
+        0.06726907630522089
+      ]
+    },
+    {
+      "id": "member-date",
+      "label": "会员日期文字",
+      "kind": "text",
+      "image": "layers/member-date.png",
+      "box": [
+        0.5231158961367954,
+        0.7299196787148594,
+        0.16972767574414185,
+        0.06526104417670683
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7112096263457884,
+        0.6596385542168675,
+        0.26725775807473084,
+        0.2891566265060241
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "cardId": "cmb-bilibili-unionpay-campus",
+  "hd": "assets/card-studio/cmb-bilibili-unionpay-campus/hd.webp",
+  "clean": "assets/card-studio/cmb-bilibili-unionpay-campus/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "招商银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.03673210892970234,
+        0.035140562248995984,
+        0.08423052564914503,
+        0.13453815261044177
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.12982900569981,
+        0.04417670682730924,
+        0.22419252691576946,
+        0.09236947791164658
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.12982900569981,
+        0.13855421686746988,
+        0.22229259024699177,
+        0.028112449799196786
+      ]
+    },
+    {
+      "id": "credit-card",
+      "label": "信用卡文字",
+      "kind": "text",
+      "image": "layers/credit-card.png",
+      "box": [
+        0.1310956301456618,
+        0.18875502008032127,
+        0.15009499683343888,
+        0.04116465863453815
+      ]
+    },
+    {
+      "id": "bilibili-logo",
+      "label": "bilibili 标志",
+      "kind": "logo",
+      "image": "layers/bilibili-logo.png",
+      "box": [
+        0.811906269791007,
+        0.04618473895582329,
+        0.14186193793540217,
+        0.11345381526104417
+      ]
+    },
+    {
+      "id": "contactless",
+      "label": "非接触标志",
+      "kind": "other",
+      "image": "layers/contactless.png",
+      "box": [
+        0.8429385687143762,
+        0.3744979919678715,
+        0.07473084230525649,
+        0.14357429718875503
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7327422419252692,
+        0.7048192771084337,
+        0.2311589613679544,
+        0.23293172690763053
+      ]
+    }
+  ]
+}

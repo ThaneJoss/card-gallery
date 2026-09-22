@@ -7,7 +7,7 @@
     "check:cards": "node scripts/card-data.mjs",
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
-    "test:browser": "pnpm build && node scripts/test-browser.mjs"
+    "test:browser": "pnpm build && node scripts/test-browser.mjs && node scripts/test-studio-browser.mjs"
   },
   "engines": {
     "node": ">=22"

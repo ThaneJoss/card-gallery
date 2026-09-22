@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "cardId": "cmbc-silver-debit-623683",
+  "hd": "assets/card-studio/cmbc-silver-debit-623683/hd.webp",
+  "clean": "assets/card-studio/cmbc-silver-debit-623683/clean.webp",
+  "regions": [
+    {
+      "id": "bank-logo",
+      "label": "民生银行标志",
+      "kind": "logo",
+      "image": "layers/bank-logo.png",
+      "box": [
+        0.02721518987341772,
+        0.04317269076305221,
+        0.1379746835443038,
+        0.17269076305220885
+      ]
+    },
+    {
+      "id": "bank-name",
+      "label": "银行中文名称",
+      "kind": "text",
+      "image": "layers/bank-name.png",
+      "box": [
+        0.17215189873417722,
+        0.05321285140562249,
+        0.44113924050632913,
+        0.09839357429718876
+      ]
+    },
+    {
+      "id": "bank-english",
+      "label": "银行英文名称",
+      "kind": "text",
+      "image": "layers/bank-english.png",
+      "box": [
+        0.17088607594936708,
+        0.15160642570281124,
+        0.4417721518987342,
+        0.055220883534136546
+      ]
+    },
+    {
+      "id": "product-name",
+      "label": "银卡借记卡文字",
+      "kind": "text",
+      "image": "layers/product-name.png",
+      "box": [
+        0.17215189873417722,
+        0.21285140562248997,
+        0.3221518987341772,
+        0.08433734939759036
+      ]
+    },
+    {
+      "id": "chip",
+      "label": "芯片",
+      "kind": "chip",
+      "image": "layers/chip.png",
+      "box": [
+        0.08987341772151898,
+        0.3172690763052209,
+        0.16582278481012658,
+        0.23694779116465864
+      ]
+    },
+    {
+      "id": "card-number",
+      "label": "样卡卡号",
+      "kind": "text",
+      "image": "layers/card-number.png",
+      "box": [
+        0.08987341772151898,
+        0.5562248995983936,
+        0.8227848101265823,
+        0.10040160642570281
+      ]
+    },
+    {
+      "id": "bin",
+      "label": "卡号前缀",
+      "kind": "text",
+      "image": "layers/bin.png",
+      "box": [
+        0.09430379746835443,
+        0.6706827309236948,
+        0.07025316455696203,
+        0.04317269076305221
+      ]
+    },
+    {
+      "id": "valid-date",
+      "label": "有效期",
+      "kind": "text",
+      "image": "layers/valid-date.png",
+      "box": [
+        0.3620253164556962,
+        0.6987951807228916,
+        0.20822784810126582,
+        0.10943775100401607
+      ]
+    },
+    {
+      "id": "sample-name",
+      "label": "样卡姓名",
+      "kind": "text",
+      "image": "layers/sample-name.png",
+      "box": [
+        0.12721518987341773,
+        0.8263052208835341,
+        0.2689873417721519,
+        0.06827309236947791
+      ]
+    },
+    {
+      "id": "direction",
+      "label": "插卡箭头",
+      "kind": "other",
+      "image": "layers/direction.png",
+      "box": [
+        0.06582278481012659,
+        0.8423694779116466,
+        0.056962025316455694,
+        0.08835341365461848
+      ]
+    },
+    {
+      "id": "unionpay-logo",
+      "label": "银联标志",
+      "kind": "logo",
+      "image": "layers/unionpay-logo.png",
+      "box": [
+        0.7107594936708861,
+        0.6736947791164659,
+        0.2721518987341772,
+        0.2921686746987952
+      ]
+    }
+  ]
+}
