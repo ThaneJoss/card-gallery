@@ -11,6 +11,14 @@ export function fitCardFace(viewportWidth, viewportHeight, portrait) {
     width: width * scale, height: height * scale, radius: CARD_SHAPE.corner * scale, scale };
 }
 
+/** Card units are centimetres: view the face from 40 cm, regardless of viewport. */
+export function fitCardCamera(viewportWidth, viewportHeight, portrait) {
+  const { scale } = fitCardFace(viewportWidth, viewportHeight, portrait);
+  const viewingDistance = 40;
+  const tangent = viewportHeight / (2 * scale * viewingDistance);
+  return { distance: viewingDistance + CARD_SHAPE.faceZ, tangent, fov: 2 * Math.atan(tangent) * 180 / Math.PI };
+}
+
 /** CSS projects the original photograph into the same card region sampled by WebGL. */
 export function posterTransform(width, height, corners) {
   if (!corners) return 'none';

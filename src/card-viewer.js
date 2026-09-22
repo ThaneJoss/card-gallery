@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { createCardTextureMapping } from './card-texture.mjs';
-import { CARD_SHAPE, fitCardFace } from './card-presentation.mjs';
+import { CARD_SHAPE, fitCardCamera } from './card-presentation.mjs';
 
 const FINISHES = {
+  original: null,
   matte: { roughness: .95, metalness: 0, specularIntensity: .12, clearcoat: 0, clearcoatRoughness: 1, iridescence: 0, envMapIntensity: .85 },
   gloss: { roughness: .2, metalness: 0, specularIntensity: 1, clearcoat: 1, clearcoatRoughness: .045, iridescence: 0, envMapIntensity: 1.15 },
   iridescent: { roughness: .24, metalness: .55, specularIntensity: 1, clearcoat: .25, clearcoatRoughness: .12, iridescence: 1, envMapIntensity: 1.35 },
@@ -27,7 +28,7 @@ function roundedRectangle(width, height, radius) {
 }
 
 /** Creates one on-demand viewer. The caller owns the surrounding controls. */
-export function createCardViewer({ container, finish = 'matte', onFinishChange = () => {} }) {
+export function createCardViewer({ container, finish = 'original', onFinishChange = () => {} }) {
   if (!Object.hasOwn(FINISHES, finish)) throw new RangeError('未知卡片材质');
   const resources = new Set();
   const own = resource => { resources.add(resource); return resource; };
@@ -57,6 +58,7 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
     canvas = renderer.domElement;
@@ -68,7 +70,7 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     container.appendChild(canvas);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(36, 1, .1, 100);
+    const camera = new THREE.PerspectiveCamera(10, 1, .1, 100);
     const card = new THREE.Group();
     card.visible = false;
     scene.add(card);
@@ -76,7 +78,6 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     const orbit = initialOrbit.clone();
     const turn = new THREE.Quaternion(), axis = new THREE.Vector3();
     let portrait = false;
-    const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     const inverseOrbit = new THREE.Quaternion(), projectedPoint = new THREE.Vector3();
     const bounds = [];
     for (const x of [-width / 2, width / 2]) for (const y of [-height / 2, height / 2]) for (const z of [-faceZ, faceZ]) bounds.push(new THREE.Vector3(x, y, z));
@@ -110,13 +111,16 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
     fill.position.set(3, -2, -8);
     scene.add(fill);
 
-    const bodyGeometry = own(new THREE.ExtrudeGeometry(roundedRectangle(width - .01, height - .01, corner - .01), {
+    // The bevel expands the outline by .02 cm on each side; keep it inside the face.
+    const bodyGeometry = own(new THREE.ExtrudeGeometry(roundedRectangle(width - .04, height - .04, corner - .02), {
       depth: .076, bevelEnabled: true, bevelThickness: .02, bevelSize: .02,
       bevelSegments: 3, steps: 1, curveSegments: 16,
     }));
     bodyGeometry.translate(0, 0, -.038);
     const edgeMaterial = own(new THREE.MeshStandardMaterial({ color: 0xc3d3cd, metalness: .25, roughness: .32 }));
-    card.add(new THREE.Mesh(bodyGeometry, edgeMaterial));
+    const originalEdge = own(new THREE.MeshBasicMaterial({ color: 0xc9d7d2, toneMapped: false }));
+    const body = new THREE.Mesh(bodyGeometry, originalEdge);
+    card.add(body);
 
     const faceGeometry = own(new THREE.ShapeGeometry(roundedRectangle(width, height, corner), 24));
     const positions = faceGeometry.attributes.position, uv = faceGeometry.attributes.uv;
@@ -124,23 +128,35 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       uv.setXY(i, (positions.getX(i) + width / 2) / width, (positions.getY(i) + height / 2) / height);
     }
     const frontMaterial = own(new THREE.MeshPhysicalMaterial({ transparent: true }));
+    const originalFront = own(new THREE.MeshBasicMaterial({ transparent: true, toneMapped: false }));
     const textureProjection = new THREE.Matrix3();
-    frontMaterial.onBeforeCompile = shader => {
+    const projectTexture = shader => {
       shader.uniforms.cardTextureProjection = { value: textureProjection };
       const projectedMap = THREE.ShaderChunk.map_fragment.replace(
         'vec4 sampledDiffuseColor = texture2D( map, vMapUv );',
-        'vec3 cardUv = cardTextureProjection * vec3( vMapUv, 1.0 );\n\tvec4 sampledDiffuseColor = texture2D( map, cardUv.xy / cardUv.z );',
+        `vec3 cardUv = cardTextureProjection * vec3( vMapUv, 1.0 );
+        vec4 sampledDiffuseColor = texture2D( map, cardUv.xy / cardUv.z );
+        // Filter in the image's sRGB space, like the DOM poster, then decode for lighting.
+        sampledDiffuseColor.rgb = mix(
+          pow((sampledDiffuseColor.rgb + vec3(0.055)) / 1.055, vec3(2.4)),
+          sampledDiffuseColor.rgb / 12.92,
+          vec3(lessThanEqual(sampledDiffuseColor.rgb, vec3(0.04045)))
+        );`,
       );
       shader.fragmentShader = 'uniform mat3 cardTextureProjection;\n' + shader.fragmentShader.replace('#include <map_fragment>', projectedMap);
     };
-    frontMaterial.customProgramCacheKey = () => 'card-projective-texture-v1';
+    for (const material of [frontMaterial, originalFront]) {
+      material.onBeforeCompile = projectTexture;
+      material.customProgramCacheKey = () => 'card-projective-srgb-texture-v2';
+    }
     const backMaterial = own(new THREE.MeshPhysicalMaterial({ color: 0xc9d7d2 }));
-    const front = new THREE.Mesh(faceGeometry, frontMaterial);
-    front.position.z = .061;
+    const originalBack = own(new THREE.MeshBasicMaterial({ color: 0xc9d7d2, toneMapped: false }));
+    const front = new THREE.Mesh(faceGeometry, originalFront);
+    front.position.z = faceZ;
     card.add(front);
-    const back = new THREE.Mesh(faceGeometry, backMaterial);
+    const back = new THREE.Mesh(faceGeometry, originalBack);
     back.rotation.y = Math.PI;
-    back.position.z = -.061;
+    back.position.z = -faceZ;
     card.add(back);
 
     const filmSize = 128, filmPixels = new Uint8Array(filmSize * filmSize * 4);
@@ -159,26 +175,27 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       surface.iridescenceThicknessMap = filmThickness;
       surface.iridescenceThicknessRange = [120, 780];
       surface.iridescenceIOR = 1.8;
-      surface.setValues(FINISHES[finish]);
     }
+    applyFinish();
 
     function render() {
       if (disposed) return;
       const w = container.clientWidth, h = container.clientHeight;
       if (!w || !h) return;
-      const frame = fitCardFace(w, h, portrait);
-      let radius = faceZ + h / (2 * tangent * frame.scale);
+      const { distance, tangent, fov } = fitCardCamera(w, h, portrait);
+      camera.fov = fov;
+      camera.zoom = 1;
       inverseOrbit.copy(orbit).invert();
-      // Start exactly behind the poster; back away only when rotation needs more room.
+      // Keep the viewing distance stable. Widen framing only to avoid clipping a rotated card.
       for (const point of bounds) {
         projectedPoint.copy(point).applyQuaternion(card.quaternion).applyQuaternion(inverseOrbit);
-        radius = Math.max(radius, projectedPoint.z + Math.abs(projectedPoint.x) * h / (tangent * (w - 48)),
-          projectedPoint.z + Math.abs(projectedPoint.y) * h / (tangent * (h - 48)));
+        const depth = distance - projectedPoint.z;
+        camera.zoom = Math.min(camera.zoom, depth * tangent * (w - 48) / (Math.abs(projectedPoint.x) * h),
+          depth * tangent * (h - 48) / (Math.abs(projectedPoint.y) * h));
       }
-      camera.position.set(0, 0, radius).applyQuaternion(orbit);
+      camera.position.set(0, 0, distance).applyQuaternion(orbit);
       camera.quaternion.copy(orbit);
       camera.up.set(0, 1, 0).applyQuaternion(orbit);
-      camera.far = Math.max(100, radius + Math.hypot(width, height));
       camera.updateProjectionMatrix();
       renderer.render(scene, camera);
     }
@@ -196,7 +213,8 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       if (!pendingTextures.has(image)) {
         const loading = new THREE.TextureLoader().loadAsync(image).then(texture => {
           if (disposed) { texture.dispose(); return null; }
-          texture.colorSpace = THREE.SRGBColorSpace;
+          // Keep encoded texels for DOM-matching filtering. Both face shaders decode after sampling.
+          texture.colorSpace = THREE.NoColorSpace;
           texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
           return texture;
         }).finally(() => pendingTextures.delete(image));
@@ -252,8 +270,10 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       portrait = mapping.portrait;
       card.rotation.z = portrait ? Math.PI / 2 : 0;
       card.visible = true;
-      if (!frontMaterial.map) frontMaterial.needsUpdate = true;
-      frontMaterial.map = texture;
+      for (const material of [frontMaterial, originalFront]) {
+        if (!material.map) material.needsUpdate = true;
+        material.map = texture;
+      }
       cacheTexture(image, texture);
       canvas.setAttribute('aria-label', `${name || '银行卡'}的三维预览。拖动或使用方向键环绕查看，Home 键复位。`);
       render();
@@ -270,12 +290,21 @@ export function createCardViewer({ container, finish = 'matte', onFinishChange =
       canvas.setAttribute('aria-label', '银行卡的三维预览。拖动或使用方向键环绕查看，Home 键复位。');
       render();
     }
+    function applyFinish() {
+      const original = finish === 'original';
+      front.material = original ? originalFront : frontMaterial;
+      back.material = original ? originalBack : backMaterial;
+      body.material = original ? originalEdge : edgeMaterial;
+      if (!original) {
+        frontMaterial.setValues(FINISHES[finish]);
+        backMaterial.setValues(FINISHES[finish]);
+      }
+    }
     function setFinish(nextFinish) {
       if (disposed) return;
       if (!Object.hasOwn(FINISHES, nextFinish)) throw new RangeError('未知卡片材质');
-      frontMaterial.setValues(FINISHES[nextFinish]);
-      backMaterial.setValues(FINISHES[nextFinish]);
       finish = nextFinish;
+      applyFinish();
       render();
       onFinishChange(nextFinish);
     }

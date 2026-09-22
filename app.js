@@ -77,7 +77,7 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   let cardViewer = null;
   let viewerRequest = 0;
   let viewerBundle = null;
-  let selectedFinish = 'matte';
+  let selectedFinish = 'original';
   let activeCard = null, viewerReady = false, interacting = false, drag = null;
   let pendingRotations = [];
   const detailVisual = $('#detail-visual');
@@ -111,6 +111,7 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     drag = null;
     detailVisual.classList.remove('is-interactive');
     cardViewer?.clearCard();
+    selectFinish('original');
     viewerStage.hidden = true;
     viewerStage.setAttribute('aria-busy', 'false');
     viewerControls.hidden = true;
@@ -175,6 +176,7 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   function resetViewer() {
     interacting = false;
     pendingRotations = [];
+    selectFinish('original');
     cardViewer?.resetView();
     detailVisual.classList.remove('is-interactive');
   }
@@ -204,15 +206,18 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     rotateViewer(...axes[event.key], Math.PI / 12);
   });
 
+  function selectFinish(finish) {
+    selectedFinish = finish;
+    cardViewer?.setFinish(finish);
+    viewerControls.querySelectorAll('[data-finish]').forEach(option => {
+      option.setAttribute('aria-pressed', String(option.dataset.finish === finish));
+    });
+  }
   viewerControls.addEventListener('click', event => {
     const button = event.target.closest('[data-finish]');
     if (!button || !cardViewer) return;
     activateViewer();
-    selectedFinish = button.dataset.finish;
-    cardViewer.setFinish(selectedFinish);
-    viewerControls.querySelectorAll('[data-finish]').forEach(option => {
-      option.setAttribute('aria-pressed', String(option === button));
-    });
+    selectFinish(button.dataset.finish);
   });
   $('#viewer-flip').addEventListener('click', () => { activateViewer(); cardViewer?.flip(); });
   $('#viewer-reset').addEventListener('click', resetViewer);
