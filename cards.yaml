@@ -82,6 +82,16 @@
   # Hibank 条目 529 明确关联 622262 与当前马年卡面；属第三方证据，该 BIN 并非主题专属。
   bin: 622262
 
+- 名称: Y-Power信用卡（银联版）
+  银行: 交通银行
+  类型: 信用卡
+  # 来源：https://m.bendibao.com/bsy618921.html（第三方产品介绍），页面标注银联普卡。
+  # 原图：http://imgbdb2.bendibao.com/bsy/20191/9/20191911202432.jpg
+  图片: ./assets/cards/bocom-y-power-unionpay.jpg
+  卡组织: 银联
+  编号: bocom-y-power-unionpay
+  # 用户指定卡名，采用银联标准版；未提供 BIN，不从其他组织或主题版本推填。
+
 - 名称: 锦鲤主题储蓄卡
   银行: 招商银行
   类型: 储蓄卡
@@ -195,3 +205,133 @@
   # BIN 交叉核对：https://db.encmasuta.com/debit-cards/amex-cn/citic-amex-cn/。
   # 第三方资料均对应中信借记金卡，未采用部分境外旧 BIN 库的泰国信用卡分类。
   bin: 377138
+
+- 名称: 轻松理财普卡
+  银行: 浦发银行
+  类型: 储蓄卡
+  # 来源：https://money.0513.org/index.php?aid=695&c=content（第三方历史产品介绍）。
+  # 原图：https://money.0513.org/upload/20140218/1392687776514227.jpg
+  图片: ./assets/cards/spdb-easy-finance-debit-621792.jpg
+  卡组织: 银联
+  编号: spdb-easy-finance-debit-621792
+  # BIN 归属：浦发银联借记卡，https://www.unionpayintl.com/cardholderServ/serviceCenter/wap/merchant/1223518813891?type=1。
+  # 普卡名称参考：https://www.yebaike.com/22/2080467.html。
+  # 使用旧版轻松理财标准卡面作产品示意，并非 621792 复合卡的精确卡面；该 BIN 也覆盖多种主题。
+  bin: 621792
+
+- 名称: 标准IC白金信用卡
+  银行: 浦发银行
+  类型: 信用卡
+  # 来源：https://www.spdbccc.com.cn/zh/eform/choose_card.htm，官方选卡页的标准 IC 白金信用卡。
+  # 原图：https://www.spdbccc.com.cn/zh/eform/images/ic_card1.gif
+  图片: ./assets/cards/spdb-unionpay-platinum-credit-622228.gif
+  卡组织: 银联
+  编号: spdb-unionpay-platinum-credit-622228
+  # BIN 核对：https://tool.zao3g.com/cardbin/bin_622228.html；https://bincheck.io/zh/details/622228。
+  # 622228 也用于其他浦发银联信用卡，采用标准白金卡面示意，不据此确认持卡人的具体主题。
+  bin: 622228
+
+- 名称: 银联借记卡
+  银行: 中国邮政储蓄银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 596「邮储绿卡通普卡」。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/2f2b7a1389a4439994adf90cfd317815-20260821092411-e36075b0.png
+  图片: ./assets/cards/psbc-green-debit-622183.png
+  卡组织: 银联
+  编号: psbc-green-debit-622183
+  # BIN 归属：https://bincheck.io/lt/cn/postal-saving-bank-of-china；https://bintable.com/country/cn?page=129。
+  # 现有证据仅确认邮储 / 银联 / 借记卡；绿卡通普卡面作产品示意，未确认 622183 对应绿卡通。
+  bin: 622183
+
+- 名称: 银联借记卡银卡
+  银行: 中国民生银行
+  类型: 储蓄卡
+  # 来源：https://www.cmbc.com.cn/cmbc_new/gryw/yxk/gbk/index.html，官网明确标为银联借记卡银卡。
+  # 原图：https://www.cmbc.com.cn/cmbc_new/imageDir/2026/01/img_pc_site/2026011410531357220.jpg
+  图片: ./assets/cards/cmbc-silver-debit-623683.jpg
+  卡组织: 银联
+  编号: cmbc-silver-debit-623683
+  # BIN 与银卡对应参考：https://zhidao.baidu.com/question/1436951629045647699.html（第三方资料）；官网产品页未列 BIN。
+  bin: 623683
+
+- 名称: 阳光电子账户
+  银行: 中国光大银行
+  类型: 储蓄卡
+  # 来源：https://www.cebbank.com/site/gryw/ygk/cpgl65/ygjjk/index.html，阳光借记卡普卡产品图。
+  # 原图：http://www.cebbank.com/site/resource/cms/2026/02/img_pc_site/2026020314052172183.png
+  图片: ./assets/cards/ceb-sunshine-account-622672.png
+  卡组织: 银联
+  编号: ceb-sunshine-account-622672
+  # 官网明确 622672 为 II、III 类电子账户：https://www.cebbank.com/site/gryw/901195/386392008/index.html。
+  # 银联借记卡分类参考：https://tool.zao3g.com/cardbin/bin_622672.html。
+  # 使用阳光借记卡标准产品图作示意，并非该电子账户的实体卡面。
+  bin: 622672
+
+- 名称: IC借记卡普卡
+  银行: 平安银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 186，明确列出 BIN 623058。
+  # 原图：https://storage.my-api.cn/static/images/Cards/Ping%20An%20Bank/%E5%B9%B3%E5%AE%89%E9%93%B6%E8%A1%8CIC%E5%80%9F%E8%AE%B0%E5%8D%A1%E6%99%AE%E5%8D%A1.png
+  图片: ./assets/cards/pab-ic-standard-debit-623058.png
+  卡组织: 银联
+  编号: pab-ic-standard-debit-623058
+  # BIN 交叉核对：https://bincheck.io/zh/details/623058；该号段也覆盖其他级别，采用普卡标准版。
+  bin: 623058
+
+- 名称: 华夏借记卡
+  银行: 华夏银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 525「华夏银行华夏卡（普卡）」。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/1000044112.png
+  图片: ./assets/cards/hxb-standard-debit-620552.png
+  卡组织: 银联
+  编号: hxb-standard-debit-620552
+  # 官网将 620552 列入华夏借记卡：https://wap.hxb.com.cn/wap/zxgg/134437.shtml。
+  # 采用普卡标准图示意；Hibank 未列该 BIN，不采用部分第三方旧表的信用卡分类。
+  bin: 620552
+
+- 名称: 美国运通Lucky借记卡
+  银行: 广发银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 398，明确列出 BIN 370330。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/2023082814160729707107724974935.jpg
+  图片: ./assets/cards/cgb-amex-lucky-debit-370330.jpg
+  卡组织: Amex
+  编号: cgb-amex-lucky-debit-370330
+  # BIN 交叉核对：https://post.cplus8.com/d/527（第三方持卡资料）。
+  bin: 370330
+
+- 名称: 商卡
+  银行: 浙商银行
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 364「商卡」，标准版。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/%E6%B5%99%E5%95%86%E9%93%B6%E8%A1%8C%E6%99%AE%E5%8D%A1.jpg
+  图片: ./assets/cards/czb-business-debit-622309.jpg
+  卡组织: 银联
+  编号: czb-business-debit-622309
+  # 官方产品说明：https://www.czbank.com/cn/personal/account/card/。
+  # BIN 归属：https://www.czbank.com/cn/pub_info/marketing/201403/t20140328_10162.shtml。
+  # 商卡名称交叉核对：https://tool.zao3g.com/cardbin/bin_622309.html；同号段也有其他卡面，采用标准版。
+  bin: 622309
+
+- 名称: 九州IC借记卡
+  银行: 恒丰银行
+  类型: 储蓄卡
+  # 来源：https://post.smzdm.com/p/445652/（第三方产品介绍），九州 IC 借记卡单张正面。
+  # 原图：https://am.zdmimg.com/201604/24/571c87586fbf7.jpg_fo742.jpg
+  图片: ./assets/cards/hf-jiuzhou-ic-debit-623078.jpg
+  卡组织: 银联
+  编号: hf-jiuzhou-ic-debit-623078
+  # 来源图的样卡号明确以 62307801 开头；该号段也用于其他卡面，采用标准九州 IC 版本。
+  bin: 623078
+
+- 名称: 标准借记卡
+  银行: 渤海银行
+  类型: 储蓄卡
+  # 来源：https://www.cbhb.com.cn/cbhbank/2024-03/14/article_2024031414113217473.shtml，官方标准借记卡产品页。
+  # 原图：https://www.cbhb.com.cn/cbhbank/imageDir/2026/03/img_pc_site/2026030413530067913.png
+  图片: ./assets/cards/cbhb-standard-debit-622884.png
+  卡组织: 银联
+  编号: cbhb-standard-debit-622884
+  # BIN 归属：https://www.chakahao.com/bin/list/40200.html；官网未给出 BIN 与卡面版本的对应表，采用标准图示意。
+  bin: 622884
