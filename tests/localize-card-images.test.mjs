@@ -126,7 +126,7 @@ test('新增 BIN 和嵌套资料字段不阻止本地化，字段值与注释均
   assert.deepEqual(result.deletedImages, ['assets/cards/old.png']);
 });
 
-test('bot 只要求图片和可选编号，展示资料由应用校验器检查', async () => {
+test('本地化只要求图片和可选编号，展示资料由应用校验器检查', async () => {
   const source = stringify([{ 图片: 'https://example.com/card.png', bin: 621700 }]);
   const result = await localizeCardImages({ source, fetchImage: async () => new Response(png) });
   assert.equal(result.images[0].path, 'assets/cards/card-1.png');

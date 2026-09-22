@@ -232,6 +232,11 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   ].join(' · ');
 
   const bankNames = [...new Set(cards.map(card => card.bank))];
+  const hongKongBanks = new Set(['香港中银', '香港汇丰', '香港众安', '香港汇立', '香港大象']);
+  const bankGroups = [
+    {id:'mainland', label:'境内银行', banks:bankNames.filter(bank => !hongKongBanks.has(bank))},
+    {id:'hong-kong', label:'香港银行', banks:bankNames.filter(bank => hongKongBanks.has(bank))}
+  ];
   // 银行按资料中首次出现的顺序；同组织卡片保留资料顺序。
   // 双标卡按优先级最高的组织排序，无组织的卡片排在最后。
   const bankRanks = new Map(bankNames.map((bank, index) => [bank, index]));
@@ -307,7 +312,7 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
     const viewportWidth = window.visualViewport?.width || window.innerWidth;
     const viewportHeight = window.visualViewport?.height || window.innerHeight;
     const rect = trigger.getBoundingClientRect();
-    const width = Math.min(kind === 'bank' ? 264 : 255, viewportWidth - 24);
+    const width = Math.min(kind === 'bank' ? 520 : 255, viewportWidth - 24);
     const below = viewportHeight - rect.bottom - 20;
     const above = rect.top - 20;
     const placeBelow = below >= Math.min(360, above);
@@ -328,7 +333,10 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
   for (const kind of ['bank','network']) {
     const menu = $(`#${kind}-options`);
     const trigger = $(`#${kind}-trigger`);
-    menu.innerHTML = pickerOptions[kind].map((option,index) => `<button class="picker-option" type="button" role="option" id="${kind}-option-${index}" data-value="${escapeHTML(option.value)}" aria-selected="false" tabindex="-1"><span class="option-icon" aria-hidden="true">${optionIcon(kind,option)}</span><span class="option-label">${escapeHTML(option.label)}</span><svg class="option-check" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg></button>`).join('');
+    const optionMarkup = new Map(pickerOptions[kind].map((option,index) => [option.value, `<button class="picker-option" type="button" role="option" id="${kind}-option-${index}" data-value="${escapeHTML(option.value)}" aria-selected="false" tabindex="-1"><span class="option-icon" aria-hidden="true">${optionIcon(kind,option)}</span><span class="option-label">${escapeHTML(option.label)}</span><svg class="option-check" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg></button>`]));
+    menu.innerHTML = kind === 'bank'
+      ? `${optionMarkup.get('all')}<div class="picker-columns" role="presentation">${bankGroups.map(group => `<div class="picker-group" role="group" aria-labelledby="bank-group-${group.id}"><div class="picker-group-title" id="bank-group-${group.id}">${group.label}</div><div class="picker-group-options" role="presentation">${group.banks.map(bank => optionMarkup.get(bank)).join('')}</div></div>`).join('')}</div>`
+      : [...optionMarkup.values()].join('');
     trigger.addEventListener('click', () => activePicker === kind ? closePicker(true) : openPicker(kind));
     trigger.addEventListener('keydown', event => {
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -349,6 +357,15 @@ import { fitCardFace, posterTransform } from './src/card-presentation.mjs';
       let next = null;
       if (event.key === 'ArrowDown') next = options[(index+1)%options.length];
       if (event.key === 'ArrowUp') next = options[(index-1+options.length)%options.length];
+      if (kind === 'bank' && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+        const group = document.activeElement.closest('.picker-group');
+        const adjacent = event.key === 'ArrowRight' ? group?.nextElementSibling : group?.previousElementSibling;
+        if (adjacent) {
+          const row = [...group.querySelectorAll('[role="option"]')].indexOf(document.activeElement);
+          const adjacentOptions = [...adjacent.querySelectorAll('[role="option"]')];
+          next = adjacentOptions[Math.min(row, adjacentOptions.length - 1)];
+        }
+      }
       if (event.key === 'Home') next = options[0];
       if (event.key === 'End') next = options.at(-1);
       if (next) { event.preventDefault(); next.focus({preventScroll:true}); next.scrollIntoView({block:'nearest'}); }

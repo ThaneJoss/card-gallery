@@ -1,10 +1,10 @@
 # 卡片资料：银行按首次出现顺序分组；桌面固定银联、Visa、Mastercard、AMEX 四列，信用卡另起一排，同组织按文件顺序向下排列。
 # 每张卡以「- 名称:」开头，其余字段前面保留两个空格，不要用 Tab。
-# 类型填写「信用卡」或「储蓄卡」；图片填写可直接访问的远端图片地址。
+# 类型填写「信用卡」或「储蓄卡」；图片填写本地路径或可直接访问的远端图片地址。
 # 卡组织只有一个时直接填写；多个时像下面一样分行列出。
 # 银行图标按银行名称自动匹配，不需要逐张填写。
 # 编号可以省略，由构建自动生成；复制已有卡片时请修改或删除编号。
-# PR 的 CI 会自动下载卡面到 assets/cards/，并将图片地址改为本地路径。
+# 远端卡面可手动运行 pnpm localize:cards 下载到 assets/cards/，并更新为本地路径。
 # 来源为 Hibank 的条目来自第三方图鉴：https://hi.zzz.moe/face。
 # bin 为卡号前 6 位或 8 位；相同 BIN 可能对应不同卡面或版本。
 # 2026-09-17 已复核基础信息；具体卡面与版本的证据边界见各条注释。
@@ -49,7 +49,7 @@
   银行: 中国建设银行
   类型: 信用卡
   # 来源：https://post.smzdm.com/p/ar6530gx/，学生版金卡页面截图。
-  # 远端裁切仅保留卡面，CI 可直接下载。
+  # 来源图片的裁切仅保留卡面，原图已保存到本地。
   图片: ./assets/cards/ccb-bilibili-landscape-student.jpg
   卡组织: 银联
   编号: ccb-bilibili-landscape-student
@@ -335,3 +335,59 @@
   编号: cbhb-standard-debit-622884
   # BIN 归属：https://www.chakahao.com/bin/list/40200.html；官网未给出 BIN 与卡面版本的对应表，采用标准图示意。
   bin: 622884
+
+- 名称: 中银万事达卡扣账卡
+  银行: 香港中银
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 224，Mastercard 借记卡标准版。
+  # 原图：https://storage.my-api.cn/static/images/Cards/Bank of China (Hong Kong)/BOC Mastercard Debit Card.png
+  # 产品：https://www.bochk.com/dam/more/bocdebitcard/card/sc.html。
+  图片: ./assets/cards/bochk-mastercard-debit.png
+  卡组织: Mastercard
+  编号: bochk-mastercard-debit
+  # BIN 来自 Hibank 条目 224，未据此推断其他卡面版本。
+  bin: 535075
+
+- 名称: 汇丰万事达卡扣账卡
+  银行: 香港汇丰
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 234，主卡标准版。
+  # 原图：https://storage.my-api.cn/static/images/Cards/The Hongkong and Shanghai Banking Corporation/HSBC Mastercard Debit 滙豐萬事達卡扣脹卡.png
+  # 产品：https://www.hsbc.com.hk/zh-hk/debit-cards/products/mastercard-debit-card/。
+  图片: ./assets/cards/hsbc-hk-mastercard-debit.png
+  卡组织: Mastercard
+  编号: hsbc-hk-mastercard-debit
+  # BIN 来自 Hibank 条目 234，未据此推断其他卡面版本。
+  bin: 541375
+
+- 名称: ZA Card 借记卡
+  银行: 香港众安
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 242，ZA Card 标准版。
+  # 原图：https://storage.my-api.cn/static/images/Cards/ZA Bank/ZA Card.png
+  图片: ./assets/cards/za-hk-visa-debit.png
+  卡组织: Visa
+  编号: za-hk-visa-debit
+  # BIN 来自 Hibank 条目 242，未据此推断其他卡面版本。
+  bin: 448060
+
+- 名称: WeLab Debit Card
+  银行: 香港汇立
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 241，WeLab Debit Card 标准版。
+  # 原图：https://storage.my-api.cn/static/images/Cards/WeLab Bank/WeLab Debit Card.png
+  图片: ./assets/cards/welab-hk-mastercard-debit.png
+  卡组织: Mastercard
+  编号: welab-hk-mastercard-debit
+  # BIN 来自 Hibank 条目 241，未据此推断其他卡面版本。
+  bin: 547974
+
+- 名称: Visa 白金借记卡
+  银行: 香港大象
+  类型: 储蓄卡
+  # 来源：https://hi.zzz.moe/face（Hibank 第三方图鉴），条目 611「EleBank Visa Platinum Card」。
+  # 原图：https://storage.my-api.cn/static/images/new_upload/%E8%B1%A1%E8%B1%A1%E9%8A%80%E8%A1%8C%20EleBank%20-%20EleBank%20Visa%20Platinum%20Card-20260903154624-c63e0098.png
+  # 产品：https://www.elebank.com/zh-hk/card；图鉴发卡行名称仍为旧称「天星銀行」，此处使用用户指定的「香港大象」。
+  图片: ./assets/cards/elebank-hk-visa-debit.png
+  卡组织: Visa
+  编号: elebank-hk-visa-debit

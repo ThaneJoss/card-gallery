@@ -18,7 +18,7 @@ function readImageCards(source) {
   }
   if (!Array.isArray(entries)) throw new Error('cards.yaml 必须是卡片列表，每张卡片以「- 名称:」开头。');
   const ids = new Set();
-  // bot 只依赖图片和编号，应用新增的资料字段由原 YAML 文档保留。
+  // 本地化只依赖图片和编号，应用新增的资料字段由原 YAML 文档保留。
   const cards = entries.map((entry, index) => {
     const label = `cards.yaml 第 ${index + 1} 张卡片`;
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`${label}须为包含「图片」的资料对象。`);
