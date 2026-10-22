@@ -104,7 +104,11 @@ cards.yaml 中的中文卡片资料和本地路径或 HTTP(S) 图片地址
 
 ### 自动检查
 
-`.github/workflows/ci.yml` 会在每次 Pull Request 和 `main` 分支推送时运行以下检查，草稿 PR 也会执行。CI 使用只读仓库权限，不部署、不访问生产资源，也不需要密钥。
+`.github/workflows/ci.yml` 在 push、pull_request（含草稿）、merge_group 和手动触发时调用固定版本的通用 CI：`ThaneJoss/github-ci/.github/workflows/ci.yml@89624ba02d911171a634ddeb4848c298f3b1c842`。调用仅授予只读仓库权限，无项目专属步骤、部署或密钥。
+
+通用模板根据 `.node-version`、`package.json` 和锁文件自动发现检查：安装固定依赖（禁用安装脚本）、执行 ESLint、Node 单元测试、构建、JavaScript 语法检查和 high/critical 依赖审计。实际完成情况以每次运行的 Quality 与 Gate 结果为准。当前项目没有 TypeScript 类型检查；模板不会自动发现 `check:cards` 或 `test:browser:built`，也不会上传浏览器截图。
+
+完整的本地回归命令如下，包含 CI 未自动发现的资料校验与浏览器检查：
 
 ```sh
 pnpm install --frozen-lockfile
@@ -120,7 +124,7 @@ pnpm test:browser:built
 - ESLint 的推荐规则检查未定义变量、未使用变量等错误，不强制重排现有代码风格。项目使用原生 JavaScript，没有 TypeScript 编译步骤；ESLint、打包和实际运行测试共同检查代码。
 - Node.js 测试覆盖 YAML 解析、卡片几何与纹理映射、分层素材、图片转换和构建失败清理；下载场景使用本地 HTTP 测试服务器。
 - 三组浏览器回归共用已构建的 `public/`，避免重复构建；使用本地 HTTP 服务和 Chromium 软件渲染，不需要 GPU 或外部服务。现有 `cards.yaml` 的图片均为仓库内素材，构建无需下载远程原图。
-- 浏览器截图与 axe JSON 报告会作为同一仓库的 CI artifact 保留 7 天，便于检查失败；CI 总时限 15 分钟，浏览器步骤时限 5 分钟。
+- 本地浏览器截图与 axe JSON 报告保存在 `output/`，不进入 Git 或发布目录。通用 CI 的 Quality 时限为 15 分钟，成功仅代表自动发现的检查完成，不代表浏览器回归已运行。
 
 ## 目录
 

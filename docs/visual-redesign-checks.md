@@ -107,6 +107,8 @@
 
 ## 2026-10-13 风格与 PR 检查复核
 
+以下为当日独立工作流的历史记录；后续通用 CI 整合后的覆盖范围见文末，不能将历史截图 artifact 或检查结果视为当前运行结果。
+
 目标基线为 `ThaneJoss/card-gallery@e4bee3e4621d19459d6a1d5c60be6bc7dae3f487`，只读参考 `ThaneJoss/webapps@994a749aecb7f9143d1d180ce86e3ba5e6632149`，两者均为复核时的最新 `main`。开始时目标没有开放 PR，远端仅有 `main`。
 
 - 配色、Inter/CJK 系统字体、焦点样式与 180ms 动效已经一致。保留画廊所需的 1480px 内容宽度、银行分组、四个固定卡组织列、三维卡体及素材下载；桌面/平板/手机使用 4/2/1 列。
@@ -119,3 +121,7 @@
 可复核证据由 `pnpm test:browser` 生成：`output/gallery/` 包含 1440、768、320px 首页，以及桌面/手机详情和图层控件截图；`*-axe.json` 记录三个首页、三个银行菜单、两个分层面板共 8 个状态的 WCAG 2/2.1 A/AA 自动检查。现有 `output/card-viewer/` 和 `output/card-studio/` 继续记录材质、横竖卡、缓存、触摸及图层回归。CI 的 `browser-screenshots` artifact 包含这些文件。
 
 验收限于 Linux Chromium、软件 WebGL 和移动视口模拟；自动 axe 检查不能代替完整人工无障碍验收。未在 Safari、Firefox、真实移动设备或线上部署上验收。
+
+## 2026-10-22 通用 CI 整合
+
+PR #22 整合 PR #23 时保留固定 SHA 的通用 reusable workflow，移除同路径的独立工作流冲突；画廊、三维和分层测试源码完整保留。通用模板自动发现 ESLint、单元测试、构建和 JavaScript 语法检查，并运行原生依赖审计；没有自动发现资料校验或浏览器脚本，也没有 `browser-screenshots` 上传步骤。浏览器与 axe 证据仍可通过上述本地命令生成，最终执行结果记录于 PR，不能由 CI Gate 推断浏览器检查通过。
