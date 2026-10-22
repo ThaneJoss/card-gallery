@@ -330,7 +330,7 @@ import { createCardStudio } from './src/card-studio-ui.js';
     const trigger = $(`#${kind}-trigger`);
     const optionMarkup = new Map(pickerOptions[kind].map((option,index) => [option.value, `<button class="picker-option" type="button" role="option" id="${kind}-option-${index}" data-value="${escapeHTML(option.value)}" aria-selected="false" tabindex="-1"><span class="option-icon" aria-hidden="true">${optionIcon(kind,option)}</span><span class="option-label">${escapeHTML(option.label)}</span><svg class="option-check" viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg></button>`]));
     menu.innerHTML = kind === 'bank'
-      ? `${optionMarkup.get('all')}<div class="picker-columns" role="presentation">${bankGroups.map(group => `<div class="picker-group" role="group" aria-labelledby="bank-group-${group.id}"><div class="picker-group-title" id="bank-group-${group.id}">${group.label}</div>${optionMarkup.get(`region:${group.id}`)}<div class="picker-group-options" role="presentation">${group.banks.map(bank => optionMarkup.get(bank)).join('')}</div></div>`).join('')}</div>`
+      ? `${optionMarkup.get('all')}<div class="picker-columns" role="presentation">${bankGroups.map(group => `<div class="picker-group" role="group" aria-labelledby="bank-group-${group.id}"><div class="picker-group-title" id="bank-group-${group.id}">${group.label}</div>${optionMarkup.get(`region:${group.id}`)}<div class="picker-group-options" role="group" aria-label="${group.label}列表" tabindex="0">${group.banks.map(bank => optionMarkup.get(bank)).join('')}</div></div>`).join('')}</div>`
       : [...optionMarkup.values()].join('');
     trigger.addEventListener('click', () => activePicker === kind ? closePicker(true) : openPicker(kind));
     trigger.addEventListener('keydown', event => {
@@ -349,14 +349,16 @@ import { createCardStudio } from './src/card-studio-ui.js';
     menu.addEventListener('keydown', event => {
       const options = [...menu.querySelectorAll('[role="option"]')];
       const index = options.indexOf(document.activeElement);
+      const focusedGroup = document.activeElement.closest('.picker-group-options');
+      const groupOptions = focusedGroup ? [...focusedGroup.querySelectorAll('[role="option"]')] : [];
       let next = null;
-      if (event.key === 'ArrowDown') next = options[(index+1)%options.length];
-      if (event.key === 'ArrowUp') next = options[(index-1+options.length)%options.length];
+      if (event.key === 'ArrowDown') next = index < 0 && groupOptions.length ? groupOptions[0] : options[(index+1)%options.length];
+      if (event.key === 'ArrowUp') next = index < 0 && groupOptions.length ? groupOptions.at(-1) : options[(index-1+options.length)%options.length];
       if (kind === 'bank' && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
         const group = document.activeElement.closest('.picker-group');
         const adjacent = event.key === 'ArrowRight' ? group?.nextElementSibling : group?.previousElementSibling;
         if (adjacent) {
-          const row = [...group.querySelectorAll('[role="option"]')].indexOf(document.activeElement);
+          const row = Math.max(0, [...group.querySelectorAll('[role="option"]')].indexOf(document.activeElement));
           const adjacentOptions = [...adjacent.querySelectorAll('[role="option"]')];
           next = adjacentOptions[Math.min(row, adjacentOptions.length - 1)];
         }
@@ -453,8 +455,14 @@ import { createCardStudio } from './src/card-studio-ui.js';
     studio.setBusy(true);
     const position = visibleCards.findIndex(item => item.id === id);
     $('#detail-position').textContent = `${position + 1} / ${visibleCards.length}`;
-    $('#previous-card').disabled = position <= 0;
-    $('#next-card').disabled = position < 0 || position >= visibleCards.length - 1;
+    const previousButton = $('#previous-card'), nextButton = $('#next-card');
+    const focusedNavigation = [previousButton, nextButton].includes(document.activeElement) ? document.activeElement : null;
+    previousButton.disabled = position <= 0;
+    nextButton.disabled = position < 0 || position >= visibleCards.length - 1;
+    if (focusedNavigation?.disabled) {
+      const nextFocus = [previousButton, nextButton].find(button => !button.disabled) || $('#close-dialog');
+      nextFocus.focus({ preventScroll: true });
+    }
     viewerStage.hidden = false;
     viewerStage.setAttribute('aria-label', `${card.bank} ${card.name}，拖动环绕查看，方向键旋转，Home 复位`);
     viewerStage.setAttribute('aria-busy', 'true');

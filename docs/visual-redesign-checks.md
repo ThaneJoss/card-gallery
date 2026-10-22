@@ -104,3 +104,24 @@
 本轮使用 Linux Chrome 150.0.7871.128 与 Playwright 验证本地构建；手机检查使用浏览器模拟。未据此宣称其他浏览器、真实移动设备或线上部署已通过验收。
 
 当前截图和报告位于 Git 忽略的 `output/webapps-theme/`：`first-screen-1440.png`、`first-screen-390.png`、`dialog-390.png`、`report.json`、`accessibility.json`；检查脚本为 `check.mjs` 与 `check-zoom.mjs`。这些文件不进入发布目录。
+
+## 2026-10-13 风格与 PR 检查复核
+
+以下为当日独立工作流的历史记录；后续通用 CI 整合后的覆盖范围见文末，不能将历史截图 artifact 或检查结果视为当前运行结果。
+
+目标基线为 `ThaneJoss/card-gallery@e4bee3e4621d19459d6a1d5c60be6bc7dae3f487`，只读参考 `ThaneJoss/webapps@994a749aecb7f9143d1d180ce86e3ba5e6632149`，两者均为复核时的最新 `main`。开始时目标没有开放 PR，远端仅有 `main`。
+
+- 配色、Inter/CJK 系统字体、焦点样式与 180ms 动效已经一致。保留画廊所需的 1480px 内容宽度、银行分组、四个固定卡组织列、三维卡体及素材下载；桌面/平板/手机使用 4/2/1 列。
+- 基线的银行菜单在 1440px 和 320px 均触发 axe `scrollable-region-focusable`。为银行滚动列表补充名称、分组语义与焦点入口，并覆盖从该入口使用上下方向键进入银行选项的行为。
+- 基线用键盘切到首张/末张时，正在使用的导航按钮被禁用，焦点落到 `BODY`。现在将焦点移到仍可用的导航按钮，关闭后返回当前卡片。
+- 分层面板部分入口仅 32–40px，统一视图切换、下载、全显/全隐、分离距离、显隐标签和底色切换的操作区域至至少 44px，沿用 8px 控件圆角。位置图保留真实坐标比例，同时提供完整列表操作。
+- 目标原有 27 项 Node 测试与两组 Chromium 回归，但最新默认分支没有工作流；历史的卡面自动整理已移除，本次不恢复它。新增 PR/main CI 实际运行 ESLint、资料校验、单元测试、构建、三组浏览器回归与依赖审计，并保留截图、axe 报告 7 天。项目没有 TypeScript，未引入类型迁移。
+- 依赖审计发现原有 `sharp 0.35.4` 受 [GHSA-wq5f-xc86-pv6w](https://github.com/advisories/GHSA-wq5f-xc86-pv6w) 影响，更新至修复版 `0.35.5`；审计通过。构建和图层回归继续使用现有素材与本地 HTTP，不生成新素材、不部署。
+
+可复核证据由 `pnpm test:browser` 生成：`output/gallery/` 包含 1440、768、320px 首页，以及桌面/手机详情和图层控件截图；`*-axe.json` 记录三个首页、三个银行菜单、两个分层面板共 8 个状态的 WCAG 2/2.1 A/AA 自动检查。现有 `output/card-viewer/` 和 `output/card-studio/` 继续记录材质、横竖卡、缓存、触摸及图层回归。CI 的 `browser-screenshots` artifact 包含这些文件。
+
+验收限于 Linux Chromium、软件 WebGL 和移动视口模拟；自动 axe 检查不能代替完整人工无障碍验收。未在 Safari、Firefox、真实移动设备或线上部署上验收。
+
+## 2026-10-22 通用 CI 整合
+
+PR #22 整合 PR #23 时保留固定 SHA 的通用 reusable workflow，移除同路径的独立工作流冲突；画廊、三维和分层测试源码完整保留。通用模板自动发现 ESLint、单元测试、构建和 JavaScript 语法检查，并运行原生依赖审计；没有自动发现资料校验或浏览器脚本，也没有 `browser-screenshots` 上传步骤。浏览器与 axe 证据仍可通过上述本地命令生成，最终执行结果记录于 PR，不能由 CI Gate 推断浏览器检查通过。
