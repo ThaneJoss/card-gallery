@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   ci:
-    uses: ThaneJoss/github-ci/.github/workflows/ci.yml@d5bb248a1cc6f32c3ed19750cbeb973f8893d080
+    uses: ThaneJoss/github-ci/.github/workflows/ci.yml@main
