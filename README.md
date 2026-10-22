@@ -104,7 +104,7 @@ cards.yaml 中的中文卡片资料和本地路径或 HTTP(S) 图片地址
 
 ### 自动检查
 
-`.github/workflows/ci.yml` 在 push、pull_request（含草稿）、merge_group 和手动触发时调用固定版本的通用 CI：`ThaneJoss/github-ci/.github/workflows/ci.yml@89624ba02d911171a634ddeb4848c298f3b1c842`。调用仅授予只读仓库权限，无项目专属步骤、部署或密钥。
+`.github/workflows/ci.yml` 在 push、pull_request（含草稿）、merge_group 和手动触发时调用固定版本的通用 CI：`ThaneJoss/github-ci/.github/workflows/ci.yml@d5bb248a1cc6f32c3ed19750cbeb973f8893d080`。调用仅授予只读仓库权限，无项目专属步骤、部署或密钥。
 
 通用模板根据 `.node-version`、`package.json` 和锁文件自动发现检查：安装固定依赖（禁用安装脚本）、执行 ESLint、Node 单元测试、构建、JavaScript 语法检查和 high/critical 依赖审计。实际完成情况以每次运行的 Quality 与 Gate 结果为准。当前项目没有 TypeScript 类型检查；模板不会自动发现 `check:cards` 或 `test:browser:built`，也不会上传浏览器截图。
 
@@ -153,7 +153,7 @@ pnpm test:browser:built
 | `assets/logos/` | 官方来源的银行及卡组织 SVG 图标 |
 | `assets/logos/sources.json` | 银行名称与图标对应关系，以及银行和卡组织图标来源 |
 | `assets/collection.webp` | 旧图集备份，不参与页面加载 |
-| `.nojekyll` | 让 GitHub Pages 直接发布静态文件 |
+| `public/.nojekyll` | 构建自动生成的空标记，让 GitHub Pages 直接发布静态文件 |
 
 ## 视觉与品牌
 

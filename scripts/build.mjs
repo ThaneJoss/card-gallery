@@ -24,11 +24,12 @@ export async function buildSite({ root = projectRoot, log = console.log } = {}) 
   await rm(output, { recursive: true, force: true });
   await mkdir(resolve(output, 'cards'), { recursive: true });
   try {
-    for (const file of ['index.html', 'styles.css', '.nojekyll', 'assets/card-mark.svg', 'assets/logos']) {
+    for (const file of ['index.html', 'styles.css', 'assets/card-mark.svg', 'assets/logos']) {
       const destination = resolve(output, file);
       await mkdir(dirname(destination), { recursive: true });
       await cp(resolve(root, file), destination, { recursive: true });
     }
+    await writeFile(resolve(output, '.nojekyll'), '');
 
     await bundle({
       entryPoints: [resolve(root, 'app.js')],
