@@ -127,7 +127,7 @@ cards.yaml 中的中文卡片资料和本地路径或 HTTP(S) 图片地址
 | `assets/logos/` | 官方来源的银行及卡组织 SVG 图标 |
 | `assets/logos/sources.json` | 银行名称与图标对应关系，以及银行和卡组织图标来源 |
 | `assets/collection.webp` | 旧图集备份，不参与页面加载 |
-| `.nojekyll` | 让 GitHub Pages 直接发布静态文件 |
+| `public/.nojekyll` | 构建自动生成的空标记，让 GitHub Pages 直接发布静态文件 |
 
 ## 视觉与品牌
 
