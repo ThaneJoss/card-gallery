@@ -198,7 +198,7 @@ pnpm test:browser:built
 
 ### Cloudflare Workers
 
-使用 **Workers Static Assets** 发布 `public/`，通过 **Workers Builds** 连接 `ThaneJoss/card-gallery` 的 `main` 分支自动部署。图库、三维卡面和素材下载都由静态文件提供，不需要 Worker 后端、数据库或运行时环境变量。图片转换使用的 `sharp` 只在构建时运行。
+使用 **Workers Static Assets** 发布 `public/`，通过 **Workers Builds** 连接 `ThaneJoss/card-gallery`：推送 `main` 自动发布到 **https://card.thanejoss.com**。图库、三维卡面和素材下载都由静态文件提供，不需要 Worker 后端、数据库或运行时环境变量。图片转换使用的 `sharp` 只在构建时运行。
 
 在 Cloudflare **Workers & Pages** 中选择 `card-gallery`，连接 GitHub 仓库，并设置：
 
@@ -224,10 +224,12 @@ pnpm deploy          # 已配置 Cloudflare 认证时发布
 
 配置只上传 `public/`，不上传原图处理目录、源码、测试或依赖。页面只使用首页和页内交互，不启用 SPA fallback；不存在的路径和文件返回 404。
 
-先在 `workers.dev` 地址核对图库筛选、三维卡面、分层素材与下载，再把生产域名 **`card.thanejoss.com`** 绑定到该 Worker。当前 `wrangler.jsonc` 尚未声明生产域名，域名切换另行完成；绑定后应把对应的 Custom Domain 写入顶层 `routes`，使后续自动部署保留该配置。GitHub Actions 继续承担已有质量检查，部署由 Workers Builds 完成。
+`wrangler.jsonc` 在顶层 `routes` 声明生产域名 `card.thanejoss.com`，部署时由 Wrangler 应用 Custom Domain 绑定，同时保留 `workers.dev` 地址。部署账户需拥有 `thanejoss.com` zone；首次切换后核对图库筛选、三维卡面、分层素材、下载和 HTTPS。GitHub Actions 继续承担已有质量检查，部署由 Workers Builds 完成。
+
+`vercel.json` 关闭 Vercel 的 Git 自动部署，避免后续提交同时发布到两个平台。旧 Vercel 项目和已生成的部署保留，可在需要时恢复原有域名指向作为回退；后续提交不会更新旧部署。如需恢复 Vercel 自动发布，先调整该配置，再使用上方通用发布表中的构建命令和 `public` 目录。
 
 参考：[Static Assets](https://developers.cloudflare.com/workers/static-assets/)、[Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/)、[Worker Previews](https://developers.cloudflare.com/workers/previews/)。
 
-### 其他静态托管平台
+### GitHub Pages
 
-Vercel 项目仍可按上方通用发布表配置构建命令和发布目录。若使用 GitHub Pages，需要通过 GitHub Actions 执行构建并上传 `public/`，直接从源码分支发布不会执行图片转换。参考 [GitHub 自定义构建文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
+若改用 GitHub Pages，需要通过 GitHub Actions 执行构建并上传 `public/`，直接从源码分支发布不会执行图片转换。参考 [GitHub 自定义构建文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
