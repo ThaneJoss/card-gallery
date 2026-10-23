@@ -7,6 +7,9 @@
     "lint": "eslint . --max-warnings 0",
     "check:cards": "node scripts/card-data.mjs",
     "build": "node scripts/build.mjs",
+    "preview:worker": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:check": "wrangler deploy --dry-run",
     "test": "node --test tests/*.test.mjs",
     "test:browser": "pnpm build && pnpm test:browser:built",
     "test:browser:built": "node scripts/test-gallery-browser.mjs && node scripts/test-browser.mjs && node scripts/test-studio-browser.mjs"
@@ -23,6 +26,7 @@
     "playwright": "1.61.1",
     "sharp": "0.35.5",
     "three": "0.169.0",
+    "wrangler": "4.152.0",
     "yaml": "2.9.1"
   }
 }

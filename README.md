@@ -196,4 +196,38 @@ pnpm test:browser:built
 
 这样每次远程部署都会从仓库卡面生成站内图片文件。手动部署时也可先构建，再上传整个 `public/`。生成的资源使用相对路径，可部署在网站根目录或仓库子目录下。
 
-Vercel 项目可按上表配置构建命令和发布目录。若使用 GitHub Pages，需要通过 GitHub Actions 执行构建并上传 `public/`，直接从源码分支发布不会执行图片转换。参考 [GitHub 自定义构建文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
+### Cloudflare Workers
+
+使用 **Workers Static Assets** 发布 `public/`，通过 **Workers Builds** 连接 `ThaneJoss/card-gallery` 的 `main` 分支自动部署。图库、三维卡面和素材下载都由静态文件提供，不需要 Worker 后端、数据库或运行时环境变量。图片转换使用的 `sharp` 只在构建时运行。
+
+在 Cloudflare **Workers & Pages** 中选择 `card-gallery`，连接 GitHub 仓库，并设置：
+
+| 设置 | 值 |
+| --- | --- |
+| 生产分支 | `main` |
+| 根目录 | 仓库根目录 |
+| 构建命令 | 留空；部署时 Wrangler 根据 `build.command` 执行 `pnpm build` |
+| 生产部署命令 | `pnpm exec wrangler deploy` |
+| 非生产分支预览 | 尚未开启；启用时使用 `pnpm exec wrangler preview` |
+| Node.js | 24，见 `.node-version` |
+| 包管理器 | pnpm 12.4.2，见 `package.json` |
+| 构建环境变量 | `PNPM_VERSION=12.4.2`，与 `packageManager` 保持一致 |
+
+依赖按 `pnpm-lock.yaml` 安装，Wrangler 固定为项目依赖中的版本。首次远程构建应确认日志包含 `pnpm build` 和 `构建完成`；如平台要求独立构建命令，可填写 `pnpm build`。Wrangler 再次构建会重新生成相同的静态资源。`previews: {}` 保留纯静态资源的预览配置，不会自动开启非生产分支构建。
+
+```sh
+pnpm install --frozen-lockfile
+pnpm preview:worker  # 构建并启动本地 Cloudflare 静态资源服务
+pnpm deploy:check    # 构建与 Wrangler dry run，不发布
+pnpm deploy          # 已配置 Cloudflare 认证时发布
+```
+
+配置只上传 `public/`，不上传原图处理目录、源码、测试或依赖。页面只使用首页和页内交互，不启用 SPA fallback；不存在的路径和文件返回 404。
+
+先在 `workers.dev` 地址核对图库筛选、三维卡面、分层素材与下载，再把生产域名 **`card.thanejoss.com`** 绑定到该 Worker。当前 `wrangler.jsonc` 尚未声明生产域名，域名切换另行完成；绑定后应把对应的 Custom Domain 写入顶层 `routes`，使后续自动部署保留该配置。GitHub Actions 继续承担已有质量检查，部署由 Workers Builds 完成。
+
+参考：[Static Assets](https://developers.cloudflare.com/workers/static-assets/)、[Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/)、[Worker Previews](https://developers.cloudflare.com/workers/previews/)。
+
+### 其他静态托管平台
+
+Vercel 项目仍可按上方通用发布表配置构建命令和发布目录。若使用 GitHub Pages，需要通过 GitHub Actions 执行构建并上传 `public/`，直接从源码分支发布不会执行图片转换。参考 [GitHub 自定义构建文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
