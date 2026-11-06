@@ -224,12 +224,13 @@ pnpm deploy          # 已配置 Cloudflare 认证时发布
 
 配置只上传 `public/`，不上传原图处理目录、源码、测试或依赖。页面只使用首页和页内交互，不启用 SPA fallback；不存在的路径和文件返回 404。
 
-`wrangler.jsonc` 在顶层 `routes` 声明生产域名 `card.thanejoss.com`，部署时由 Wrangler 应用 Custom Domain 绑定，同时保留 `workers.dev` 地址。部署账户需拥有 `thanejoss.com` zone；首次切换后核对图库筛选、三维卡面、分层素材、下载和 HTTPS。GitHub Actions 继续承担已有质量检查，部署由 Workers Builds 完成。
+`wrangler.jsonc` 在顶层 `routes` 声明普通 Worker Route `card.thanejoss.com/*`，与现有路由一致，同时保留 `workers.dev` 地址。生产域名沿用现有 CNAME 记录及边缘入口配置，不创建 Custom Domain，也不修改 DNS 记录、目标或代理状态。部署账户需拥有 `thanejoss.com` zone；发布后通过实际域名请求验证边缘入口、页面与静态资源，并核对图库筛选、三维卡面、分层素材、下载和 HTTPS。GitHub Actions 继续承担已有质量检查，部署由 Workers Builds 完成。
 
-`vercel.json` 关闭 Vercel 的 Git 自动部署，避免后续提交同时发布到两个平台。旧 Vercel 项目和已生成的部署保留，可在需要时恢复原有域名指向作为回退；后续提交不会更新旧部署。如需恢复 Vercel 自动发布，先调整该配置，再使用上方通用发布表中的构建命令和 `public` 目录。
+`vercel.json` 关闭 Vercel 的 Git 自动部署，避免后续提交同时发布到两个平台。旧 Vercel 项目和已生成的部署保留，后续提交不会更新旧部署；平台回退方案需单独协调，不随本配置改动 DNS 或移除现有 Worker Route。如需恢复 Vercel 自动发布，先调整该配置，再使用上方通用发布表中的构建命令和 `public` 目录。
 
 参考：[Static Assets](https://developers.cloudflare.com/workers/static-assets/)、[Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/)、[Worker Previews](https://developers.cloudflare.com/workers/previews/)。
 
 ### GitHub Pages
 
 若改用 GitHub Pages，需要通过 GitHub Actions 执行构建并上传 `public/`，直接从源码分支发布不会执行图片转换。参考 [GitHub 自定义构建文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
+
