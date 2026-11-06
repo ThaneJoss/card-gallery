@@ -136,20 +136,26 @@ import { createCardStudio } from './src/card-studio-ui.js';
     // A flat image cannot separate layers; use the complete HD face in that view.
     const image = view === 'layers' && card.studio?.status === 'ready'
       ? card.studio.hd : cardView(card, view).image;
+    const setFallbackImage = (source, suffix) => {
+      viewerFallback.src = source;
+      const download = $('#download-current');
+      download.href = source;
+      download.download = `${card.id}-${suffix}.webp`;
+    };
     let usingOriginal = image === card.image;
     viewerFallback.onerror = () => {
       if (request !== viewerRequest || !dialog.open) return;
       if (!usingOriginal) {
         usingOriginal = true;
         viewerStatus.textContent = '当前图片暂不可用，已尝试显示原始卡面。';
-        viewerFallback.src = card.image;
+        setFallbackImage(card.image, 'original');
       } else {
         viewerFallback.hidden = true;
         viewerFallback.onerror = null;
         viewerStatus.textContent = '卡面图片暂时无法加载，可切换卡面版本或尝试下载。';
       }
     };
-    viewerFallback.src = image;
+    setFallbackImage(image, view === 'layers' ? 'hd' : view);
     viewerFallback.hidden = false;
     viewerControls.hidden = true;
     studio.setBusy(true);

@@ -131,6 +131,10 @@ async function fallbackRegression(browser) {
         await fallbackPage.locator(`[data-card-view="${view}"]`).click();
         await waitImage(image);
         if (view === 'layers') {
+          assert.equal(await fallbackPage.locator('#download-current').getAttribute('href'), card.studio.hd);
+          const currentDownload = fallbackPage.waitForEvent('download');
+          await fallbackPage.locator('#download-current').click();
+          assert.equal((await currentDownload).suggestedFilename(), `${card.id}-hd.webp`);
           assert.equal(await fallbackPage.locator('#layer-spacing').isDisabled(), true);
           assert.equal(await fallbackPage.locator('[data-layer-visible]').first().isDisabled(), true);
           assert.ok((await fallbackPage.locator('#selected-layer-download').getAttribute('href')).endsWith('.png'));
@@ -154,6 +158,10 @@ async function fallbackRegression(browser) {
       await fallbackPage.route(new URL(card.studio.hd, origin).href, route => route.abort());
       await fallbackPage.locator(`[data-card="${card.id}"]`).click();
       await waitImage(card.image);
+      assert.equal(await fallbackPage.locator('#download-current').getAttribute('href'), card.image);
+      const originalDownload = fallbackPage.waitForEvent('download');
+      await fallbackPage.locator('#download-current').click();
+      assert.equal((await originalDownload).suggestedFilename(), `${card.id}-original.webp`);
       await closeCard(fallbackPage, card.id);
       await fallbackPage.route(new URL(card.image, origin).href, route => route.abort());
       await fallbackPage.locator(`[data-card="${card.id}"]`).click();
