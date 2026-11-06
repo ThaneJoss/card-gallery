@@ -89,7 +89,9 @@
       <div class="detail-workspace">
         <div class="detail-stage-column">
           <div class="detail-visual" id="detail-visual">
-            <div id="detail-viewer" class="card-viewer-stage" tabindex="0" role="img" aria-label="银行卡三维预览，拖动环绕查看" aria-busy="false" hidden></div>
+            <div id="detail-viewer" class="card-viewer-stage" tabindex="0" role="img" aria-label="银行卡三维预览，拖动环绕查看" aria-busy="false" hidden>
+              <img id="detail-fallback" class="card-viewer-fallback" alt="" decoding="async" draggable="false" hidden>
+            </div>
             <p id="detail-viewer-status" class="viewer-status" role="status" hidden></p>
           </div>
           <div class="viewer-controls" id="detail-viewer-controls" hidden>

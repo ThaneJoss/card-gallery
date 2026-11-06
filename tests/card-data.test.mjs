@@ -47,6 +47,23 @@ test('只需填写四个必填字段，清空文件可以清空收藏', () => {
   assert.deepEqual(parseCards('# 暂时没有卡片\n'), []);
 });
 
+test('编号保留中文、内部空格与字面百分号', () => {
+  for (const id of ['example-card', '测试 卡', '100% 收藏', '%2F', '%2E%2E']) {
+    assert.equal(parseCards(stringify([{ ...minimalCard, 编号: id }]))[0].id, id);
+  }
+  assert.equal(parseCards(stringify([{ ...minimalCard, 编号: '  测试 卡  ' }]))[0].id, '测试 卡');
+  assert.equal(parseCards(stringify([{ ...minimalCard, 编号: '   ' }]))[0].id, 'card-1');
+});
+
+test('拒绝路径编号并定位到具体卡片', () => {
+  for (const id of ['.', '..', '.. ', '../outside', 'nested/card', '..\\outside', 'nested\\card', '/absolute', 'C:relative', 'C:\\absolute', 'bad\0id']) {
+    assert.throws(() => parseCards(stringify([minimalCard, { ...minimalCard, 编号: id }])), error => {
+      assert.match(error.message, /第 2 张卡片的「编号」须为非空的单一目录名/);
+      return true;
+    });
+  }
+});
+
 test('可选 BIN 接受六位和八位数字或文本，统一保留为文本', () => {
   for (const bin of [621700, '621700', 53106300, '53106300', '012345']) {
     const [card] = parseCards(stringify([{ ...minimalCard, bin }]));

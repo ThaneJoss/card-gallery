@@ -12,6 +12,14 @@ const networks = new Map([
   ['jcb', 'jcb'], ['discover', 'discover']
 ]);
 
+export function validateCardId(id, label = '卡片编号') {
+  if (typeof id !== 'string' || !id.trim() || ['.', '..'].includes(id.trim()) ||
+    id.includes('/') || id.includes('\\') || id.includes('\0') || /^[a-z]:/i.test(id.trim())) {
+    throw new Error(`${label}须为非空的单一目录名，不能使用「.」「..」、路径分隔符、空字符或盘符前缀。`);
+  }
+  return id;
+}
+
 export function parseCards(source) {
   let entries;
   try {
@@ -46,7 +54,7 @@ export function parseCards(source) {
       return value.map(item => item.trim());
     };
 
-    const id = text('编号', false) || `card-${index + 1}`;
+    const id = validateCardId(text('编号', false) || `card-${index + 1}`, `${label}的「编号」`);
     if (ids.has(id)) throw new Error(`${label}的编号「${id}」重复，请修改或省略编号。`);
     ids.add(id);
     const type = types.get(text('类型'));
