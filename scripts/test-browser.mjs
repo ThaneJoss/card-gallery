@@ -201,6 +201,19 @@ async function fallbackRegression(browser) {
     await fallbackPage.unroute('**/card-viewer.js');
     await openCard(fallbackPage, card.id);
     assert.equal(await fallbackPage.locator('#detail-fallback').isVisible(), false, '查看器脚本恢复后可重试三维');
+    // Also exercise texture failure after the renderer has already initialized.
+    await fallbackPage.route(new URL(card.studio.clean, origin).href, route => route.abort());
+    await fallbackPage.locator('[data-card-view="clean"]').click();
+    await fallbackPage.waitForFunction(src => {
+      const image = document.querySelector('#detail-fallback');
+      return !image.hidden && image.getAttribute('src') === src && image.complete && image.naturalWidth > 0;
+    }, card.image);
+    assert.equal(await canvas(fallbackPage).isVisible(), false);
+    assert.equal(await fallbackPage.locator('#download-current').getAttribute('href'), card.image);
+    await closeCard(fallbackPage, card.id);
+    await fallbackPage.unroute(new URL(card.studio.clean, origin).href);
+    await openCard(fallbackPage, card.id);
+    assert.equal(await fallbackPage.locator('#detail-fallback').isVisible(), false, '纹理失败后查看器可恢复');
     await closeCard(fallbackPage, card.id);
   } finally {
     await context.close();
