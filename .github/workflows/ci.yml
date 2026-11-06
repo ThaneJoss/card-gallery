@@ -12,3 +12,21 @@ permissions:
 jobs:
   ci:
     uses: ThaneJoss/github-ci/.github/workflows/ci.yml@main
+
+  inspect-remaining-advisory:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fix/studio-ids-webgl-fallback'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      npm_config_manage_package_manager_versions: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: npm install --global --ignore-scripts --no-audit --no-fund pnpm@12.4.2
+      - name: Inspect all remaining advisory details
+        run: pnpm audit --json
