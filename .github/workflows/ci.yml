@@ -12,3 +12,43 @@ permissions:
 jobs:
   ci:
     uses: ThaneJoss/github-ci/.github/workflows/ci.yml@main
+
+  prepare-security-update:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fix/studio-ids-webgl-fallback'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+      npm_config_manage_package_manager_versions: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Use the project's package manager
+        run: npm install --global --ignore-scripts --no-audit --no-fund pnpm@12.4.2
+      - name: Generate the smallest official Wrangler security upgrade
+        run: pnpm update wrangler@4.153.0 --lockfile-only --ignore-scripts
+      - name: Record generated dependency files for review
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          for (const path of ['package.json', 'pnpm-lock.yaml']) {
+            console.log('DEPENDENCY_FILE|' + JSON.stringify({ path, content: readFileSync(path, 'utf8') }));
+          }
+          NODE
+      - name: Install the generated lockfile exactly
+        run: pnpm install --frozen-lockfile
+      - name: Validate Wrangler and card inputs
+        run: |
+          pnpm exec wrangler --version
+          pnpm check:cards
+          pnpm deploy:check
+      - name: Install Chromium for the existing browser regressions
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run the existing browser regressions
+        run: pnpm test:browser:built
