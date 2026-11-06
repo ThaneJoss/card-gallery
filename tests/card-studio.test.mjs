@@ -1,29 +1,91 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { once } from 'node:events';
+import { createServer } from 'node:http';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import sharp from 'sharp';
 import { publishCardStudio } from '../scripts/card-studio.mjs';
 import { cardView, layerPlacement } from '../src/card-studio.mjs';
 import { CARD_SHAPE } from '../src/card-presentation.mjs';
 
-async function fixture(t) {
+async function fixture(t, cardId = 'example') {
   const root = await mkdtemp(resolve(tmpdir(), 'card-studio-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const directory = resolve(root, 'assets/card-studio/example');
+  const directory = resolve(root, 'assets/card-studio', cardId);
   await mkdir(resolve(directory, 'layers'), { recursive: true });
   for (const name of ['hd', 'clean']) await sharp({ create: { width: 400, height: 250, channels: 3, background: '#97bad2' } }).webp().toFile(resolve(directory, `${name}.webp`));
   const ink = await sharp({ create: { width: 80, height: 30, channels: 4, background: '#1765cd' } }).png().toBuffer();
   await sharp({ create: { width: 100, height: 50, channels: 4, background: '#00000000' } })
     .composite([{ input: ink, left: 10, top: 10 }]).png().toFile(resolve(directory, 'layers/logo.png'));
-  const entry = { version: 1, cardId: 'example', status: 'ready', width: 400, height: 250,
+  const entry = { version: 1, cardId, status: 'ready', width: 400, height: 250,
     hd: 'hd.webp', clean: 'clean.webp', notes: ['生成式重建'],
     elements: [{ id: 'logo', label: '银行标志', kind: 'logo', image: 'layers/logo.png', box: [.1, .2, .25, .2] }] };
   const save = value => writeFile(resolve(directory, 'index.json'), JSON.stringify(value));
   await save(entry);
-  return { root, directory, entry, save, output: resolve(root, 'public'), cardId: 'example' };
+  return { root, directory, entry, save, output: resolve(root, 'public'), cardId };
 }
+
+async function staticServer(t, root) {
+  const server = createServer(async (request, response) => {
+    try {
+      const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+      const file = resolve(root, `.${pathname}`);
+      if (!file.startsWith(root + sep)) {
+        response.writeHead(403).end();
+        return;
+      }
+      const body = await readFile(file);
+      response.writeHead(200).end(body);
+    } catch {
+      response.writeHead(404).end();
+    }
+  });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(() => new Promise((done, reject) => {
+    server.close(error => error ? reject(error) : done());
+    server.closeAllConnections();
+  }));
+  return `http://127.0.0.1:${server.address().port}/`;
+}
+
+test('中文、空格和百分号编号的分层素材可通过 HTTP 读取', async t => {
+  for (const cardId of ['example-card', '测试 卡', '100% 收藏', '%2F', '%2E%2E']) {
+    await t.test(cardId, async t => {
+      const context = await fixture(t, cardId);
+      const studio = await publishCardStudio(context);
+      assert.equal(studio.status, 'ready');
+      assert.equal(studio.hd, `./studio/${encodeURIComponent(cardId)}/hd.webp`);
+      const origin = await staticServer(t, context.output);
+      for (const [url, file, source] of [
+        [studio.hd, 'hd.webp', true],
+        [studio.clean, 'clean.webp', true],
+        [studio.thumbnail, 'thumbnail.webp', false],
+        [studio.manifest, 'index.json', false],
+        [studio.elements[0].image, 'layers/logo.png', true]
+      ]) {
+        const response = await fetch(new URL(url, origin), { signal: AbortSignal.timeout(5_000) });
+        assert.equal(response.status, 200, `无法读取 ${url}`);
+        const published = await readFile(resolve(context.output, 'studio', cardId, file));
+        assert.deepEqual(Buffer.from(await response.arrayBuffer()), published);
+        if (source) assert.deepEqual(published, await readFile(resolve(context.directory, file)));
+      }
+      const manifestResponse = await fetch(new URL(studio.manifest, origin), { signal: AbortSignal.timeout(5_000) });
+      const manifest = await manifestResponse.json();
+      assert.equal(manifest.cardId, cardId);
+      assert.equal(manifest.elements[0].image, 'layers/logo.png');
+    });
+  }
+});
+
+test('发布分层素材前拒绝会改变目录的编号', async t => {
+  const context = await fixture(t);
+  for (const cardId of ['', ' ', '.', '..', '.. ', '../outside', 'nested/card', '..\\outside', 'nested\\card', '/absolute', 'C:relative', 'C:\\absolute', 'bad\0id', null, 123]) {
+    await assert.rejects(publishCardStudio({ ...context, cardId }), /卡片编号须为非空的单一目录名/);
+  }
+});
 
 test('发布完整卡面、底图、透明PNG和可独立下载的像素坐标', async t => {
   const context = await fixture(t);

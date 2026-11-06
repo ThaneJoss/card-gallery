@@ -80,12 +80,14 @@ import { createCardStudio } from './src/card-studio-ui.js';
   let viewerReady = false, drag = null;
   let pendingRotations = [];
   const viewerStage = $('#detail-viewer');
+  const viewerFallback = $('#detail-fallback');
   const viewerControls = $('#detail-viewer-controls');
   const viewerStatus = $('#detail-viewer-status');
   const studio = createCardStudio({
     onViewChange(view) {
       selectedView = view;
       viewerReady = false;
+      hideViewerFallback();
       viewerStage.setAttribute('aria-busy', 'true');
       viewerStatus.hidden = true;
       studio.setBusy(true);
@@ -112,10 +114,57 @@ import { createCardStudio } from './src/card-studio-ui.js';
     return viewerBundle;
   }
 
+  function hideViewerFallback() {
+    viewerFallback.hidden = true;
+    viewerFallback.onerror = null;
+    viewerFallback.removeAttribute('src');
+    viewerStage.classList.remove('is-fallback');
+    viewerStage.tabIndex = 0;
+    if (activeCard) viewerStage.setAttribute('aria-label', `${activeCard.bank} ${activeCard.name}，拖动环绕查看，方向键旋转，Home 复位`);
+  }
+
+  function showViewerFallback(card, request, view) {
+    viewerReady = false;
+    pendingRotations = [];
+    const hadFocus = viewerStage.contains(document.activeElement) || viewerControls.contains(document.activeElement);
+    if (drag && viewerStage.hasPointerCapture(drag.id)) viewerStage.releasePointerCapture(drag.id);
+    drag = null;
+    viewerStage.classList.add('is-fallback');
+    viewerStage.tabIndex = -1;
+    viewerStage.setAttribute('aria-label', `${card.bank} ${card.name}卡面图片`);
+    viewerFallback.alt = `${card.bank} ${card.name}卡面`;
+    // A flat image cannot separate layers; use the complete HD face in that view.
+    const image = view === 'layers' && card.studio?.status === 'ready'
+      ? card.studio.hd : cardView(card, view).image;
+    let usingOriginal = image === card.image;
+    viewerFallback.onerror = () => {
+      if (request !== viewerRequest || !dialog.open) return;
+      if (!usingOriginal) {
+        usingOriginal = true;
+        viewerStatus.textContent = '当前图片暂不可用，已尝试显示原始卡面。';
+        viewerFallback.src = card.image;
+      } else {
+        viewerFallback.hidden = true;
+        viewerFallback.onerror = null;
+        viewerStatus.textContent = '卡面图片暂时无法加载，可切换卡面版本或尝试下载。';
+      }
+    };
+    viewerFallback.src = image;
+    viewerFallback.hidden = false;
+    viewerControls.hidden = true;
+    studio.setBusy(true);
+    viewerStatus.textContent = view === 'layers'
+      ? '暂时无法显示立体效果，已显示完整高清卡面；图层仍可查看和下载。'
+      : '暂时无法显示立体效果，已切换为卡面图片。';
+    viewerStatus.hidden = false;
+    if (hadFocus) $('#close-dialog').focus({ preventScroll: true });
+  }
+
   function clearViewer() {
     viewerRequest += 1;
     viewerReady = false;
     pendingRotations = [];
+    hideViewerFallback();
     if (drag && viewerStage.hasPointerCapture(drag.id)) viewerStage.releasePointerCapture(drag.id);
     drag = null;
     cardViewer?.clearCard();
@@ -138,6 +187,7 @@ import { createCardStudio } from './src/card-studio-ui.js';
       if (request !== viewerRequest || !dialog.open) return;
       const applied = await viewer.setCard({ ...cardView(card, view), name: `${card.bank} ${card.name}` });
       if (!applied || request !== viewerRequest || !dialog.open) return;
+      hideViewerFallback();
       viewerReady = true;
       if (pendingRotations.length) viewer.rotate(pendingRotations);
       pendingRotations = [];
@@ -155,8 +205,7 @@ import { createCardStudio } from './src/card-studio-ui.js';
       cardViewer?.clearCard();
       viewerStage.setAttribute('aria-busy', 'false');
       viewerControls.querySelectorAll('button').forEach(button => { button.disabled = true; });
-      viewerStatus.textContent = '暂时无法显示立体效果，请关闭后重试。';
-      viewerStatus.hidden = false;
+      showViewerFallback(card, request, view);
     }
   }
 
@@ -171,7 +220,7 @@ import { createCardStudio } from './src/card-studio-ui.js';
     cardViewer?.resetView();
   }
   viewerStage.addEventListener('pointerdown', event => {
-    if (drag || event.button !== 0) return;
+    if (viewerStage.classList.contains('is-fallback') || drag || event.button !== 0) return;
     viewerStage.focus({ preventScroll: true });
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
     viewerStage.setPointerCapture(event.pointerId);
@@ -187,7 +236,7 @@ import { createCardStudio } from './src/card-studio-ui.js';
     viewerStage.addEventListener(type, event => { if (drag?.id === event.pointerId) drag = null; });
   }
   viewerStage.addEventListener('keydown', event => {
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (viewerStage.classList.contains('is-fallback') || event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.key === 'Home') { event.preventDefault(); resetViewer(); return; }
     const axes = { ArrowLeft: [0, 1], ArrowRight: [0, -1], ArrowUp: [1, 0], ArrowDown: [-1, 0] };
     if (!Object.hasOwn(axes, event.key)) return;

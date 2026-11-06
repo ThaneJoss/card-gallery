@@ -1,12 +1,13 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
 import sharp from 'sharp';
+import { validateCardId } from './card-data.mjs';
 
 const kinds = new Set(['logo', 'text', 'chip', 'other']);
 
 /** Publish only complete card asset sets; source cards can exist without a studio set. */
 export async function publishCardStudio({ root, output, cardId }) {
-  const folder = encodeURIComponent(cardId);
+  const folder = validateCardId(cardId);
   const source = resolve(root, 'assets/card-studio', folder);
   let entry;
   try {
@@ -23,7 +24,7 @@ export async function publishCardStudio({ root, output, cardId }) {
   if (!Array.isArray(entry.elements)) throw new Error('图层须为列表');
 
   const target = resolve(output, 'studio', folder);
-  const url = file => `./studio/${folder}/${file.split('/').map(encodeURIComponent).join('/')}`;
+  const url = file => `./studio/${encodeURIComponent(folder)}/${file.split('/').map(encodeURIComponent).join('/')}`;
   const local = file => {
     if (typeof file !== 'string' || !file || file.includes('\\') || file.startsWith('/') || /^[a-z]+:/i.test(file)) throw new Error('图层图片须使用目录内相对路径');
     const path = resolve(source, file);

@@ -60,6 +60,7 @@ async function assertViewerVisible(page) {
   assert.equal(await canvas(page).count(), 1, '详情只能存在一个渲染画布');
   assert.equal(await canvas(page).evaluate(element => getComputedStyle(element).opacity), '1', '三维画布应直接显示，无需先点击');
   assert.equal(await page.locator('#detail-art, .detail-poster').count(), 0, '详情不应再创建大图覆盖层');
+  assert.equal(await page.locator('#detail-fallback').isVisible(), false, '三维正常时不应显示兜底图片');
 }
 function observe(page) {
   page.on('pageerror', error => errors.push(error.message));
@@ -91,6 +92,113 @@ async function finishes(page, side) {
   assert.equal(await difference(matte, await snapshot(page, `${side}-matte-return`)), 0, `${side}切回哑光必须恢复画面`);
   return matte;
 }
+
+async function fallbackRegression(browser) {
+  for (const width of [1280, 320]) {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+    try {
+      // Exercise Three.js's real constructor failure, including the idle warm-up.
+      await context.addInitScript(() => {
+        const getContext = HTMLCanvasElement.prototype.getContext;
+        window.__allowWebGL = false;
+        HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
+          if (!window.__allowWebGL && /webgl/i.test(kind)) return null;
+          return getContext.call(this, kind, ...args);
+        };
+      });
+      const fallbackPage = await context.newPage();
+      fallbackPage.setDefaultTimeout(15_000);
+      const pageErrors = [];
+      fallbackPage.on('pageerror', error => pageErrors.push(error.message));
+      await fallbackPage.goto(origin);
+      const cards = await fallbackPage.evaluate(() => window.CARD_GALLERY_DATA);
+      const card = cards.find(item => item.studio?.status === 'ready' && item.studio.elements.length);
+      assert.ok(card);
+      const fallback = fallbackPage.locator('#detail-fallback');
+      const waitImage = async image => {
+        await fallbackPage.waitForFunction(src => {
+          const image = document.querySelector('#detail-fallback');
+          return !image.hidden && image.getAttribute('src') === src && image.complete && image.naturalWidth > 0;
+        }, image);
+        assert.equal(await fallbackPage.locator('#detail-viewer').getAttribute('aria-busy'), 'false');
+        assert.equal(await fallbackPage.locator('#detail-viewer-controls').isVisible(), false);
+      };
+      await fallbackPage.locator(`[data-card="${card.id}"]`).click();
+      await waitImage(card.studio.hd);
+      assert.ok((await fallback.getAttribute('alt')).includes(card.name));
+      assert.equal(await fallbackPage.locator('#detail-viewer').getAttribute('tabindex'), '-1');
+      for (const [view, image] of [['clean', card.studio.clean], ['layers', card.studio.hd], ['original', card.image]]) {
+        await fallbackPage.locator(`[data-card-view="${view}"]`).click();
+        await waitImage(image);
+        if (view === 'layers') {
+          assert.equal(await fallbackPage.locator('#layer-spacing').isDisabled(), true);
+          assert.equal(await fallbackPage.locator('[data-layer-visible]').first().isDisabled(), true);
+          assert.ok((await fallbackPage.locator('#selected-layer-download').getAttribute('href')).endsWith('.png'));
+          const download = fallbackPage.waitForEvent('download');
+          await fallbackPage.locator('#selected-layer-download').click();
+          assert.equal((await download).suggestedFilename(), `${card.id}-${card.studio.elements[0].id}.png`);
+        }
+      }
+      const download = fallbackPage.waitForEvent('download');
+      await fallbackPage.locator('#download-current').click();
+      assert.equal((await download).suggestedFilename(), `${card.id}-original.webp`);
+      assert.ok(await fallbackPage.locator('#card-dialog').evaluate(element => element.scrollWidth <= element.clientWidth));
+      await fallbackPage.locator('#next-card').click();
+      const nextId = await fallbackPage.locator('#detail-title').textContent();
+      const nextCard = cards.find(item => item.name === nextId);
+      await waitImage(nextCard.studio?.status === 'ready' ? nextCard.studio.hd : nextCard.image);
+      await closeCard(fallbackPage, nextCard.id);
+      assert.equal(await fallback.isVisible(), false);
+
+      // A failed HD image should fall back once to the original, without a loop.
+      await fallbackPage.route(new URL(card.studio.hd, origin).href, route => route.abort());
+      await fallbackPage.locator(`[data-card="${card.id}"]`).click();
+      await waitImage(card.image);
+      await closeCard(fallbackPage, card.id);
+      await fallbackPage.route(new URL(card.image, origin).href, route => route.abort());
+      await fallbackPage.locator(`[data-card="${card.id}"]`).click();
+      await fallbackPage.waitForFunction(() => document.querySelector('#detail-viewer-status').textContent.includes('卡面图片暂时无法加载'));
+      assert.equal(await fallback.isVisible(), false);
+      await closeCard(fallbackPage, card.id);
+      await fallbackPage.unroute(new URL(card.studio.hd, origin).href);
+      await fallbackPage.unroute(new URL(card.image, origin).href);
+
+      // Reopening after capability recovery must restore normal 3D controls.
+      await fallbackPage.evaluate(() => { window.__allowWebGL = true; });
+      await openCard(fallbackPage, card.id);
+      assert.equal(await fallback.isVisible(), false);
+      assert.equal(await fallbackPage.locator('#detail-viewer').getAttribute('tabindex'), '0');
+      assert.equal(await fallbackPage.locator('#detail-viewer-controls').isVisible(), true);
+      assert.equal(await fallbackPage.locator('[data-finish="original"]').isEnabled(), true);
+      assert.deepEqual(pageErrors, [], 'WebGL 初始化失败不能产生未处理异常');
+      await closeCard(fallbackPage, card.id);
+    } finally {
+      await context.close();
+    }
+  }
+
+  const context = await browser.newContext();
+  try {
+    const fallbackPage = await context.newPage();
+    fallbackPage.setDefaultTimeout(15_000);
+    await fallbackPage.route('**/card-viewer.js', route => route.abort());
+    await fallbackPage.goto(origin);
+    const card = await fallbackPage.evaluate(() => window.CARD_GALLERY_DATA.find(item => item.studio?.status === 'ready'));
+    await fallbackPage.locator(`[data-card="${card.id}"]`).click();
+    await fallbackPage.waitForFunction(() => {
+      const image = document.querySelector('#detail-fallback');
+      return !image.hidden && image.complete && image.naturalWidth > 0;
+    });
+    await closeCard(fallbackPage, card.id);
+    await fallbackPage.unroute('**/card-viewer.js');
+    await openCard(fallbackPage, card.id);
+    assert.equal(await fallbackPage.locator('#detail-fallback').isVisible(), false, '查看器脚本恢复后可重试三维');
+    await closeCard(fallbackPage, card.id);
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader'] });
   page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
@@ -325,6 +433,7 @@ try {
   await closeCard(page, vertical.id, false);
   assert.deepEqual([...external], [], '网站不能依赖外部CDN');
   assert.deepEqual(errors, [], '浏览器不得产生脚本或控制台错误');
+  await fallbackRegression(browser);
   console.log(`3D浏览器回归通过，截图：${output}`);
 } catch (error) {
   if (page && !page.isClosed()) await page.screenshot({ path: resolve(output, 'failure.png'), fullPage: true }).catch(() => {});
